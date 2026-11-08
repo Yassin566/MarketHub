@@ -1,6 +1,6 @@
 # Customer payment requests
 
-All endpoints require a customer access token. Customer ownership is derived from the authenticated principal.
+All customer endpoints require a customer access token. Customer ownership is derived from the authenticated principal.
 
 ## Request payment for an order
 
@@ -20,9 +20,23 @@ Configuration:
 
 - `MARKETHUB_PAYMENT_PROVIDER_MODE=sandbox` selects the local deterministic adapter.
 - `MARKETHUB_OUTBOX_WORKER_ENABLED=false` keeps dispatch disabled by default. Set it to `true` to run the scheduled worker in a local/test environment after confirming sandbox mode.
+- `MARKETHUB_PAYMENT_WEBHOOK_SECRET` is empty by default; set a strong secret to enable the sandbox webhook endpoint.
 
-The sandbox adapter does not make network calls, create a real checkout session, charge money, or simulate a verified payment success. It does not mark orders paid or trigger fulfillment.
+## Signed sandbox payment webhooks
+
+POST /api/v1/webhooks/payments/sandbox
+
+Headers:
+- `X-MarketHub-Event-Id`: stable provider event identifier (max 120 characters)
+- `X-MarketHub-Timestamp`: Unix timestamp in seconds
+- `X-MarketHub-Signature`: `sha256=<hex HMAC-SHA256>`
+
+The signature is HMAC-SHA256 over `<timestamp>.<exact raw request body>`. Timestamps outside a five-minute window are rejected. The JSON body contains `type` (`payment.succeeded` or `payment.failed`), `providerReference`, `amount`, and `currency`. Events are sandbox-only and must match the stored provider reference, amount, and currency.
+
+Provider event IDs are unique per provider. Exact redeliveries return a duplicate result; reuse of an event ID with a different body is rejected. Successful payment events consume the still-active inventory reservations, decrement both on-hand and reserved stock, and mark the parent and vendor orders paid atomically. Failed events release active reservations and cancel a still-pending order. A late success after reservations expire is recorded as `REQUIRES_REVIEW`; it does not mark the order paid or consume inventory.
+
+This endpoint is a sandbox integration/testing surface only. No production gateway, provider credentials, refund, or real financial transaction is implemented. Never mark an order paid from a browser redirect.
 
 ## Current scope boundary
 
-There is no production payment gateway, provider credential handling, browser checkout redirect, webhook endpoint, refund, or payment/order success transition. The sandbox reference is an integration/testing primitive only. Production integrations must implement provider-side idempotency, signed callback verification, event deduplication, replay protection, and reconciliation. A browser redirect must never mark an order paid.
+Production use still requires a real provider adapter, provider-specific signature protocol and key rotation, secret storage, callback monitoring, reconciliation, refunds, and a late-payment compensation process. The sandbox HMAC protocol is not a substitute for a gateway's official webhook verification.

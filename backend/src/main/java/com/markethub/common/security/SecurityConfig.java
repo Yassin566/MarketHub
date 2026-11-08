@@ -18,7 +18,7 @@ public class SecurityConfig {
  @Bean AuthenticationManager authenticationManager(AuthenticationConfiguration c)throws Exception{return c.getAuthenticationManager();}
  @Bean SecurityFilterChain securityFilterChain(HttpSecurity h,JwtAuthenticationFilter f,DaoAuthenticationProvider p)throws Exception{
   return h.csrf(c->c.disable()).authenticationProvider(p).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-   .authorizeHttpRequests(a->a.requestMatchers("/actuator/health/**","/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html","/api/v1/auth/**").permitAll()
+   .authorizeHttpRequests(a->a.requestMatchers("/api/v1/webhooks/payments/**").permitAll().requestMatchers("/actuator/health/**","/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html","/api/v1/auth/**").permitAll()
    .requestMatchers(org.springframework.http.HttpMethod.GET,"/api/v1/products/**","/api/v1/vendors/*/products").permitAll().anyRequest().authenticated())
    .addFilterBefore(f,UsernamePasswordAuthenticationFilter.class).httpBasic(b->b.disable()).formLogin(x->x.disable()).build();
  }
