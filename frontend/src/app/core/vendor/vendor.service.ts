@@ -32,6 +32,23 @@ export interface VendorOrder {
 }
 export interface VendorOrderPage { orders: VendorOrder[]; limit: number; offset: number; hasMore: boolean }
 
+export interface VendorAnalyticsCurrency {
+  currency: string; orderCount: number; paidOrderCount: number;
+  processingOrderCount: number; fulfilledOrderCount: number;
+  cancelledOrderCount: number; recognizedRevenue: number;
+}
+export interface VendorAnalyticsDaily {
+  date: string; currency: string; orderCount: number; recognizedRevenue: number;
+}
+export interface VendorAnalyticsProduct {
+  productId: string; productName: string; currency: string;
+  unitsSold: number; recognizedRevenue: number;
+}
+export interface VendorAnalytics {
+  from: string; to: string; currencies: VendorAnalyticsCurrency[];
+  daily: VendorAnalyticsDaily[]; topProducts: VendorAnalyticsProduct[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class VendorService {
   private readonly http = inject(HttpClient);
@@ -60,6 +77,10 @@ export class VendorService {
   orders(limit = 20, offset = 0): Observable<ApiResponse<VendorOrderPage>> {
     const params = new HttpParams().set('limit', limit).set('offset', offset);
     return this.http.get<ApiResponse<VendorOrderPage>>('/api/v1/vendor/orders', { params });
+  }
+  analytics(from: string, to: string): Observable<ApiResponse<VendorAnalytics>> {
+    const params = new HttpParams().set('from', from).set('to', to);
+    return this.http.get<ApiResponse<VendorAnalytics>>('/api/v1/vendor/analytics', { params });
   }
   updateOrderStatus(id: string, status: 'PROCESSING', note: string): Observable<ApiResponse<VendorOrder>> {
     return this.http.patch<ApiResponse<VendorOrder>>(

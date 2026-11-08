@@ -1,9 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { VendorInventory, VendorOrder, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
+import { VendorAnalytics, VendorAnalyticsDaily, VendorInventory, VendorOrder, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
 
-type VendorTab = 'overview' | 'products' | 'inventory' | 'orders';
+type VendorTab = 'overview' | 'analytics' | 'products' | 'inventory' | 'orders';
 
 @Component({
   standalone: true,
@@ -24,6 +24,12 @@ export class VendorPortalPageComponent {
   readonly lowStockCount = computed(() => this.inventory().filter(x => x.availableQuantity <= 5).length);
   readonly openOrderCount = computed(() => this.orders().filter(x => x.status === 'PAID' || x.status === 'PROCESSING').length);
 
+  readonly analytics = signal<VendorAnalytics | null>(null);
+  readonly analyticsLoading = signal(false);
+  readonly analyticsError = signal('');
+  analyticsFrom = this.dateInput(29);
+  analyticsTo = this.dateInput(0);
+
   productName = '';
   productSlug = '';
   productDescription = '';
@@ -43,6 +49,13 @@ export class VendorPortalPageComponent {
 
   constructor() { this.load(); }
 
+  private dateInput(daysAgo: number): string {
+    const date = new Date();
+    date.setUTCHours(0, 0, 0, 0);
+    date.setUTCDate(date.getUTCDate() - daysAgo);
+    return date.toISOString().slice(0, 10);
+  }
+
   load(): void {
     this.loading.set(true);
     this.error.set('');
@@ -60,9 +73,50 @@ export class VendorPortalPageComponent {
       next: r => { this.orders.set(r.data.orders); done(); },
       error: () => { this.error.set('Could not load vendor orders.'); done(); }
     });
+    this.loadAnalytics();
   }
 
-  setTab(tab: VendorTab): void { this.activeTab.set(tab); this.notice.set(''); }
+  loadAnalytics(): void {
+    if (!this.analyticsFrom || !this.analyticsTo || this.analyticsFrom > this.analyticsTo) {
+      this.analyticsError.set('Choose a valid date range.');
+      return;
+    }
+    const start = new Date(this.analyticsFrom + 'T00:00:00Z');
+    const end = new Date(this.analyticsTo + 'T00:00:00Z');
+    const days = Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
+    if (days > 366) {
+      this.analyticsError.set('Choose a date range of 366 days or fewer.');
+      return;
+    }
+    this.analyticsLoading.set(true);
+    this.analyticsError.set('');
+    this.api.analytics(this.analyticsFrom, this.analyticsTo).subscribe({
+      next: response => {
+        this.analytics.set(response.data);
+        this.analyticsLoading.set(false);
+      },
+      error: () => {
+        this.analyticsLoading.set(false);
+        this.analyticsError.set('Analytics could not be loaded. Check the date range and try again.');
+      }
+    });
+  }
+
+  dailyForCurrency(currency: string): VendorAnalyticsDaily[] {
+    return (this.analytics()?.daily ?? []).filter(item => item.currency === currency);
+  }
+
+  dailyBarWidth(item: VendorAnalyticsDaily): number {
+    const values = this.dailyForCurrency(item.currency).map(row => Number(row.recognizedRevenue));
+    const max = Math.max(0, ...values);
+    return max > 0 ? Math.max(2, Number(item.recognizedRevenue) / max * 100) : 0;
+  }
+
+  setTab(tab: VendorTab): void {
+    this.activeTab.set(tab);
+    this.notice.set('');
+    if (tab === 'analytics' && !this.analytics() && !this.analyticsLoading()) this.loadAnalytics();
+  }
 
   editProduct(product: VendorProduct): void {
     this.editingProduct.set(product);
