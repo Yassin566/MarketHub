@@ -88,4 +88,16 @@ describe('VendorService', () => {
     expect(request.request.body).toEqual(shipment);
     request.flush(response({ id: 'order-5' }));
   });
+  it('requests vendor analytics for the selected date range', () => {
+    service.analytics('2026-10-01', '2026-10-31').subscribe();
+    const request = http.expectOne('/api/v1/vendor/analytics?from=2026-10-01&to=2026-10-31');
+    expect(request.request.method).toBe('GET');
+    request.flush(response({
+      from: '2026-10-01', to: '2026-10-31',
+      currencies: [{ currency: 'TND', orderCount: 3, paidOrderCount: 2, processingOrderCount: 1, fulfilledOrderCount: 1, cancelledOrderCount: 0, recognizedRevenue: 120 }],
+      daily: [{ date: '2026-10-02', currency: 'TND', orderCount: 1, recognizedRevenue: 40 }],
+      topProducts: [{ productId: 'product-1', productName: 'Desk Lamp', currency: 'TND', unitsSold: 2, recognizedRevenue: 80 }]
+    }));
+  });
+
 });
