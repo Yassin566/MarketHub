@@ -134,7 +134,7 @@ public class CustomerInventoryReservationService {
     @Transactional
     public void expireDueReservations() {
         List<ExpiredReservation> expired = jdbc.query("""
-                SELECT id, product_id, quantity
+                SELECT id, product_id, order_id, quantity
                 FROM inventory_reservations
                 WHERE status = 'ACTIVE' AND expires_at <= now()
                 ORDER BY expires_at, id
@@ -143,6 +143,7 @@ public class CustomerInventoryReservationService {
                 """, (rs, row) -> new ExpiredReservation(
                 rs.getObject("id", UUID.class),
                 rs.getObject("product_id", UUID.class),
+                rs.getObject("order_id", UUID.class),
                 rs.getLong("quantity")), EXPIRY_BATCH_SIZE);
 
         for (ExpiredReservation reservation : expired) {
@@ -160,13 +161,31 @@ public class CustomerInventoryReservationService {
                 if (inventoryChanged != 1) {
                     throw new IllegalStateException("Reservation inventory is inconsistent");
                 }
+                if (reservation.orderId() != null) {
+                    int expiredOrder = jdbc.update("""
+                            UPDATE customer_orders
+                            SET status = 'EXPIRED', updated_at = now()
+                            WHERE id = ? AND status = 'PENDING_PAYMENT'
+                              AND NOT EXISTS (
+                                  SELECT 1 FROM inventory_reservations
+                                  WHERE order_id = ? AND status = 'ACTIVE'
+                              )
+                            """, reservation.orderId(), reservation.orderId());
+                    if (expiredOrder == 1) {
+                        jdbc.update("""
+                                UPDATE vendor_orders
+                                SET status = 'EXPIRED', updated_at = now()
+                                WHERE order_id = ? AND status = 'PENDING_PAYMENT'
+                                """, reservation.orderId());
+                    }
+                }
             }
         }
     }
 
     private record ProductStock(UUID vendorId, long onHand, long reserved,
                                 String productName, String productStatus, String vendorStatus) {}
-    private record ExpiredReservation(UUID id, UUID productId, long quantity) {}
+    private record ExpiredReservation(UUID id, UUID productId, UUID orderId, long quantity) {}
 
     private static final org.springframework.jdbc.core.RowMapper<ReservationView> RESERVATION_MAPPER =
             (rs, row) -> new ReservationView(
