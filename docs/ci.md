@@ -1,8 +1,8 @@
 # Continuous integration
 
-The `backend-ci` workflow runs for pull requests targeting `main`, pushes to
-`main`, and manual dispatches. Changes under `backend/` and
-`.github/workflows/` trigger the workflow.
+The `backend-ci` workflow runs for every pull request targeting `main`, pushes
+to `main`, and manual dispatches. Running on every PR avoids a skipped required
+status when a documentation-only PR is opened.
 
 ## Backend verification
 
