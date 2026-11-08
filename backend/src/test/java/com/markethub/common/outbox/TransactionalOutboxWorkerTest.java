@@ -70,7 +70,7 @@ class TransactionalOutboxWorkerTest {
     }
 
     @Test
-    void reschedulesEventsWithoutARegisteredHandlerInsteadOfAcknowledgingThem() {
+    void reschedulesEventsWithoutARegisteredHandlerInsteadOfAcknowledgingThem() throws Exception {
         when(handler.eventType()).thenReturn("OTHER_EVENT");
         when(outbox.claimBatch(20, Duration.ofMinutes(2))).thenReturn(List.of(message));
         when(outbox.reschedule(eventId, leaseToken,
