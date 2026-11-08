@@ -98,13 +98,16 @@ public class CustomerInventoryReservationService {
             return reservation;
         }
 
-        jdbc.update("""
+        int inventoryChanged = jdbc.update("""
                 UPDATE product_inventory
                 SET reserved_quantity = reserved_quantity - ?, version = version + 1, updated_at = now()
                 WHERE product_id = ? AND reserved_quantity >= ?
                 """, reservation.quantity(), reservation.productId(), reservation.quantity());
+        if (inventoryChanged != 1) {
+            throw new IllegalStateException("Reservation inventory is inconsistent");
+        }
 
-        String nextStatus = reservation.expiresAt().isBefore(Instant.now()) ? "EXPIRED" : "RELEASED";
+        String nextStatus = !reservation.expiresAt().isAfter(Instant.now()) ? "EXPIRED" : "RELEASED";
         return jdbc.queryForObject("""
                 UPDATE inventory_reservations
                 SET status = ?, updated_at = now()
@@ -149,11 +152,14 @@ public class CustomerInventoryReservationService {
                     WHERE id = ? AND status = 'ACTIVE'
                     """, reservation.id());
             if (changed == 1) {
-                jdbc.update("""
+                int inventoryChanged = jdbc.update("""
                         UPDATE product_inventory
                         SET reserved_quantity = reserved_quantity - ?, version = version + 1, updated_at = now()
                         WHERE product_id = ? AND reserved_quantity >= ?
                         """, reservation.quantity(), reservation.productId(), reservation.quantity());
+                if (inventoryChanged != 1) {
+                    throw new IllegalStateException("Reservation inventory is inconsistent");
+                }
             }
         }
     }
