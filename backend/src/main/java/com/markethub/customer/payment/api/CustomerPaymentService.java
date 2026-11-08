@@ -41,6 +41,13 @@ public class CustomerPaymentService {
                 FOR UPDATE
                 """, (rs, row) -> rs.getObject("id", UUID.class), orderId);
         OrderPaymentSnapshot order = loadOrderForUpdate(customerId, orderId);
+        previous = findByIdempotencyKey(customerId, idempotencyKey);
+        if (previous != null) {
+            if (!previous.orderId().equals(orderId)) {
+                throw new IllegalStateException("Idempotency-Key was already used for another order");
+            }
+            return previous;
+        }
         if (!"PENDING_PAYMENT".equals(order.status())) {
             throw new IllegalStateException("Order is not awaiting payment");
         }
