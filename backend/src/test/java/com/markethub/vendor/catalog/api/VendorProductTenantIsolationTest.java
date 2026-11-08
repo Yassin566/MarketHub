@@ -1,5 +1,6 @@
 package com.markethub.vendor.catalog.api;
 import com.markethub.vendor.application.ApprovedVendorAccess;
+import com.markethub.common.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -26,7 +27,7 @@ class VendorProductTenantIsolationTest {
   when(access.requireApprovedVendor(user)).thenReturn(ownVendor);
   when(jdbc.query(anyString(),ArgumentMatchers.<RowMapper<VendorProductService.ProductView>>any(),eq(foreignProduct),eq(ownVendor))).thenReturn(List.of());
   VendorProductRequest request=new VendorProductRequest("New name","new-name","description",new BigDecimal("12.5000"),"USD",0L);
-  assertThrows(IllegalArgumentException.class,()->service.update(user,foreignProduct,request));
+  assertThrows(ResourceNotFoundException.class,()->service.update(user,foreignProduct,request));
  }
  @Test void staleClientVersionCannotOverwriteNewerProduct(){
   UUID user=UUID.randomUUID(),vendor=UUID.randomUUID(),product=UUID.randomUUID();
@@ -41,6 +42,6 @@ class VendorProductTenantIsolationTest {
   UUID user=UUID.randomUUID(),ownVendor=UUID.randomUUID(),foreignProduct=UUID.randomUUID();
   when(access.requireApprovedVendor(user)).thenReturn(ownVendor);
   when(jdbc.update(contains("set status='ARCHIVED'"),eq(foreignProduct),eq(ownVendor))).thenReturn(0);
-  assertThrows(IllegalArgumentException.class,()->service.archive(user,foreignProduct));
+  assertThrows(ResourceNotFoundException.class,()->service.archive(user,foreignProduct));
  }
 }
