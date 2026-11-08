@@ -13,5 +13,6 @@ public class AppUser {
  @Column(name="updated_at",nullable=false) private Instant updatedAt;
  protected AppUser(){}
  public static AppUser register(String email,String hash){AppUser u=new AppUser();u.id=UUID.randomUUID();u.email=email.trim().toLowerCase(java.util.Locale.ROOT);u.passwordHash=hash;u.role=UserRole.CUSTOMER;u.status=UserStatus.ACTIVE;u.createdAt=Instant.now();u.updatedAt=u.createdAt;return u;}
+ public void activateVendorRole(){if(status!=UserStatus.ACTIVE)throw new IllegalStateException("Only active accounts can become vendors");if(role!=UserRole.CUSTOMER&&role!=UserRole.VENDOR)throw new IllegalStateException("This account cannot be assigned vendor access");role=UserRole.VENDOR;updatedAt=Instant.now();}
  public UUID getId(){return id;} public String getEmail(){return email;} public String getPasswordHash(){return passwordHash;} public UserRole getRole(){return role;} public UserStatus getStatus(){return status;}
 }
