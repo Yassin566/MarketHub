@@ -38,6 +38,13 @@ public class CustomerPaymentService {
             throw new IllegalStateException("Order is not awaiting payment");
         }
 
+        // Lock reservation rows so expiry cannot release stock between validation and commit.
+        List<UUID> reservationIds = jdbc.query("""
+                SELECT id FROM inventory_reservations
+                WHERE order_id = ?
+                ORDER BY product_id
+                FOR UPDATE
+                """, (rs, row) -> rs.getObject("id", UUID.class), orderId);
         Long activeReservations = jdbc.queryForObject("""
                 SELECT count(*) FROM inventory_reservations
                 WHERE order_id = ? AND status = 'ACTIVE' AND expires_at > now()
@@ -46,7 +53,7 @@ public class CustomerPaymentService {
                 SELECT count(*) FROM inventory_reservations
                 WHERE order_id = ? AND (status <> 'ACTIVE' OR expires_at <= now())
                 """, Long.class, orderId);
-        if (activeReservations == null || activeReservations == 0
+        if (reservationIds.isEmpty() || activeReservations == null || activeReservations == 0
                 || invalidReservations == null || invalidReservations > 0) {
             throw new IllegalStateException("Order inventory reservations are no longer valid");
         }
@@ -75,7 +82,7 @@ public class CustomerPaymentService {
                 INSERT INTO transactional_outbox
                     (id, event_key, aggregate_type, aggregate_id, event_type, payload)
                 VALUES (?, ?, 'PAYMENT', ?, 'PAYMENT_REQUESTED', ?::jsonb)
-                """, UUID.randomUUID(), idempotencyKey, paymentId, payload);
+                """, UUID.randomUUID(), paymentId, paymentId, payload);
 
         return loadPayment(customerId, paymentId);
     }
