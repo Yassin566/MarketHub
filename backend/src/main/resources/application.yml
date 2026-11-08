@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: markethub-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/markethub}
+    username: ${POSTGRES_USER:markethub}
+    password: ${POSTGRES_PASSWORD:markethub-local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  data.redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+security.jwt:
+  secret: ${JWT_SECRET:local-development-secret-change-this-32-bytes-minimum}
+  issuer: ${JWT_ISSUER:markethub}
+  access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
+management.endpoints.web.exposure.include: health,info,metrics
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
