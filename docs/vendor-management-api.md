@@ -32,4 +32,4 @@ Product request fields: name, slug, optional description, price (non-negative de
 
 ## Automated security verification
 
-`VendorProductHttpSecurityIntegrationTest` exercises the real bearer-token filter, Spring Security chain, MVC controller, and PostgreSQL-backed tenant queries. It verifies that a vendor's product list excludes another vendor's product and that attempts to update or archive a foreign product return HTTP 404 without changing the foreign row.
+`VendorProductHttpSecurityIntegrationTest` exercises the real bearer-token filter, Spring Security chain, MVC controller, and PostgreSQL-backed tenant queries. It verifies that store reads and updates are scoped to the authenticated vendor, that a vendor's product list excludes another vendor's product, and that attempts to update or archive a foreign product return HTTP 404 without changing the foreign row.
