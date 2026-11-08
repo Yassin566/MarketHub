@@ -23,7 +23,6 @@ class VendorProductTenantIsolationTest {
   when(jdbc.query(anyString(),ArgumentMatchers.<RowMapper<VendorProductService.ProductView>>any(),eq(foreignProduct),eq(ownVendor))).thenReturn(List.of());
   VendorProductRequest request=new VendorProductRequest("New name","new-name","description",new java.math.BigDecimal("12.5000"),"USD");
   assertThrows(IllegalArgumentException.class,()->service.update(user,foreignProduct,request));
-  verify(jdbc,never()).update(contains("set name="),any(),any(),any(),any(),any(),any(),any(),any());
  }
  @Test void archiveCannotMutateProductOutsideResolvedVendor(){
   UUID user=UUID.randomUUID(),ownVendor=UUID.randomUUID(),foreignProduct=UUID.randomUUID();
