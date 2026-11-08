@@ -11,6 +11,9 @@ Order creation locks the customer's cart and product/inventory rows in stable pr
 ## Payment consistency
 A customer payment request locks reservations and the parent order, verifies every reservation remains active, and writes the payment attempt and `PAYMENT_REQUESTED` outbox event atomically. The sandbox provider uses the payment UUID as its idempotency key and never calls a network. A signed sandbox webhook verifies HMAC over the timestamp and exact body, checks provider reference/amount/currency, and deduplicates event IDs. Successful callbacks atomically consume reserved inventory and mark payment, parent order, and vendor orders paid. Failed callbacks release active reservations and cancel a still-pending order. A success callback arriving after reservation expiry sets payment to `REQUIRES_REVIEW` and never marks the order paid. Browser redirects must never mark payment successful.
 
+## Payment operations visibility
+Administrative payment queries are read-only and restricted to `ADMIN` and `SUPER_ADMIN`. They expose bounded, paginated payment summaries and a bounded provider-event history for investigation. Operational visibility does not authorize replaying events or changing payment state.
+
 Production payment use requires provider-specific signature verification, key rotation, secret storage, reconciliation, refunds, and late-payment compensation.
 
 ## Transactional outbox delivery

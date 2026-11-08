@@ -37,6 +37,15 @@ Provider event IDs are unique per provider. Exact redeliveries return a duplicat
 
 This endpoint is a sandbox integration/testing surface only. No production gateway, provider credentials, refund, or real financial transaction is implemented. Never mark an order paid from a browser redirect.
 
+## Admin payment operations
+
+Administrative users with the `ADMIN` or `SUPER_ADMIN` role can inspect payment attempts without changing payment state:
+
+- `GET /api/v1/admin/payments?status=REQUIRES_REVIEW&limit=50&offset=0` lists payments, optionally filtered by a supported payment status.
+- `GET /api/v1/admin/payments/{paymentId}/events` returns up to the latest 100 provider events for that payment, including event type, processing outcome, and timestamps.
+
+The list defaults to 50 records and caps page size at 100. Supported status filters are `REQUESTED`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `EXPIRED`, `REFUNDED`, and `REQUIRES_REVIEW`. These endpoints are read-only; they do not replay callbacks, resolve reviews, or mark payments successful.
+
 ## Current scope boundary
 
 Production use still requires a real provider adapter, provider-specific signature protocol and key rotation, secret storage, callback monitoring, reconciliation, refunds, and a late-payment compensation process. The sandbox HMAC protocol is not a substitute for a gateway's official webhook verification.
