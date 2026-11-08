@@ -138,8 +138,8 @@ public class CustomerInventoryReservationService {
                 FROM inventory_reservations
                 WHERE status = 'ACTIVE' AND expires_at <= now()
                 ORDER BY expires_at, id
-                FOR UPDATE SKIP LOCKED
                 LIMIT ?
+                FOR UPDATE SKIP LOCKED
                 """, (rs, row) -> new ExpiredReservation(
                 rs.getObject("id", UUID.class),
                 rs.getObject("product_id", UUID.class),
