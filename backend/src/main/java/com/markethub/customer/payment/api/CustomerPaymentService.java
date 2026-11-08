@@ -33,18 +33,17 @@ public class CustomerPaymentService {
             return previous;
         }
 
-        OrderPaymentSnapshot order = loadOrderForUpdate(customerId, orderId);
-        if (!"PENDING_PAYMENT".equals(order.status())) {
-            throw new IllegalStateException("Order is not awaiting payment");
-        }
-
-        // Lock reservation rows so expiry cannot release stock between validation and commit.
+        // Lock reservations before the order to match the expiry worker's lock order.
         List<UUID> reservationIds = jdbc.query("""
                 SELECT id FROM inventory_reservations
                 WHERE order_id = ?
                 ORDER BY product_id
                 FOR UPDATE
                 """, (rs, row) -> rs.getObject("id", UUID.class), orderId);
+        OrderPaymentSnapshot order = loadOrderForUpdate(customerId, orderId);
+        if (!"PENDING_PAYMENT".equals(order.status())) {
+            throw new IllegalStateException("Order is not awaiting payment");
+        }
         Long activeReservations = jdbc.queryForObject("""
                 SELECT count(*) FROM inventory_reservations
                 WHERE order_id = ? AND status = 'ACTIVE' AND expires_at > now()
