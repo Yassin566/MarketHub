@@ -13,6 +13,7 @@ import java.util.*;
 @Service
 public class CustomerOrderService {
     private static final int ORDER_RESERVATION_TTL_MINUTES = 15;
+    private static final int MAX_HISTORY_PAGE_SIZE = 100;
     private final JdbcTemplate jdbc;
     private final CustomerInventoryReservationService reservations;
 
@@ -25,6 +26,7 @@ public class CustomerOrderService {
                             BigDecimal unitPrice, String currency, BigDecimal lineTotal) {}
     public record OrderView(UUID id, String status, String currency, BigDecimal subtotal,
                             BigDecimal total, Instant expiresAt, Instant createdAt, List<OrderLine> items) {}
+    public record OrderPage(List<OrderView> orders, int limit, int offset, boolean hasMore) {}
     private record CartLine(UUID productId, UUID vendorId, String productName, long quantity,
                             BigDecimal price, String currency, long onHand, long reserved,
                             String productStatus, String vendorStatus) {}
@@ -131,6 +133,24 @@ public class CustomerOrderService {
         jdbc.update("DELETE FROM customer_cart_items WHERE cart_id = ?", cartId);
         jdbc.update("UPDATE customer_carts SET version = version + 1, updated_at = now() WHERE id = ?", cartId);
         return loadOrder(customerId, orderId);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderPage list(UUID customerId, int limit, int offset) {
+        if (limit < 1 || limit > MAX_HISTORY_PAGE_SIZE) {
+            throw new IllegalArgumentException("limit must be between 1 and " + MAX_HISTORY_PAGE_SIZE);
+        }
+        if (offset < 0) throw new IllegalArgumentException("offset must not be negative");
+        List<UUID> ids = jdbc.query("""
+                SELECT id FROM customer_orders
+                WHERE customer_user_id = ?
+                ORDER BY created_at DESC, id DESC
+                LIMIT ? OFFSET ?
+                """, (rs, row) -> rs.getObject("id", UUID.class), customerId, limit + 1, offset);
+        boolean hasMore = ids.size() > limit;
+        List<OrderView> page = ids.stream().limit(limit)
+                .map(id -> loadOrder(customerId, id)).toList();
+        return new OrderPage(page, limit, offset, hasMore);
     }
 
     @Transactional(readOnly = true)

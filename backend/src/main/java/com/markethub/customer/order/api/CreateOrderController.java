@@ -25,6 +25,14 @@ public class CreateOrderController {
         return ApiResponse.ok(orders.createFromCart(principal.userId(), idempotencyKey));
     }
 
+    @GetMapping
+    public ApiResponse<CustomerOrderService.OrderPage> history(
+            @AuthenticationPrincipal MarketHubPrincipal principal,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset) {
+        return ApiResponse.ok(orders.list(principal.userId(), limit, offset));
+    }
+
     @GetMapping("/{orderId}")
     public ApiResponse<CustomerOrderService.OrderView> get(
             @AuthenticationPrincipal MarketHubPrincipal principal,
