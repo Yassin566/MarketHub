@@ -11,9 +11,9 @@ Multi-vendor marketplace foundation using a modular monolith.
 ## Current implementation
 The backend includes customer identity, vendor lifecycle, vendor catalog and inventory, persistent carts and reservations, transactional order creation, payment request records, a lease-safe transactional outbox, and a deterministic sandbox payment provider. Signed sandbox webhooks verify HMAC signatures, deduplicate provider event IDs, and apply payment/order/inventory changes transactionally. Admin-only read APIs expose payment attempts and provider-event history.
 
-An optional stale-payment review worker detects payments stuck in PROCESSING and flags them for manual review. It does not query a provider, infer success or failure, change orders, or modify inventory. The reconciliation worker, outbox worker, and webhook endpoint are disabled unless explicitly configured.
+An optional stale-payment review worker detects payments stuck in PROCESSING and flags them for manual review. Admins can record an audited, evidence-backed resolution after independently verifying provider status. A confirmed success consumes stock only while reservations remain active and unexpired; otherwise the payment stays under review. A confirmed failure releases active reservations and cancels a still-pending order.
 
-The sandbox provider and webhook are test infrastructure only: no production gateway, credentials, network calls, or real financial transactions are included. See docs/ for API and architecture details.
+The reconciliation worker, outbox worker, and webhook endpoint are disabled unless explicitly configured. The sandbox provider and webhook are test infrastructure only: no production gateway, credentials, network calls, or real financial transactions are included. See docs/ for API and architecture details.
 
 This is an incremental implementation. Production gateway integration, authoritative provider reconciliation, refunds, taxes, shipping, commission/payout accounting, refresh-token rotation, and full Angular business screens remain future work.
 
