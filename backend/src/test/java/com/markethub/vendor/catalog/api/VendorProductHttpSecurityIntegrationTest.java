@@ -1,6 +1,5 @@
 package com.markethub.vendor.catalog.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.markethub.identity.domain.UserRole;
 import com.markethub.identity.security.JwtService;
 import com.markethub.identity.security.MarketHubPrincipal;
@@ -36,10 +35,8 @@ class VendorProductHttpSecurityIntegrationTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private JwtService jwtService;
-    @Autowired private ObjectMapper objectMapper;
 
     private UUID vendorAUser;
-    private UUID vendorBUser;
     private UUID vendorAProduct;
     private UUID vendorBProduct;
     private String vendorAToken;
@@ -47,16 +44,12 @@ class VendorProductHttpSecurityIntegrationTest {
     @BeforeEach
     void setUp() {
         vendorAUser = createUser("vendor-a-" + UUID.randomUUID() + "@example.test");
-        vendorBUser = createUser("vendor-b-" + UUID.randomUUID() + "@example.test");
         UUID vendorA = createVendor(vendorAUser, "Vendor A");
-        UUID vendorB = createVendor(vendorBUser, "Vendor B");
+        UUID vendorB = createVendor(createUser("vendor-b-" + UUID.randomUUID() + "@example.test"), "Vendor B");
         vendorAProduct = createProduct(vendorA, "Vendor A product", "vendor-a-" + UUID.randomUUID());
         vendorBProduct = createProduct(vendorB, "Vendor B product", "vendor-b-" + UUID.randomUUID());
 
-        vendorAToken = jwtService.issueAccessToken(
-                new MarketHubPrincipal(vendorAUser, "vendor-a-" + vendorAUser + "@example.test",
-                        "not-used", UserRole.VENDOR, true));
-        // The persisted email must match the JWT email claim; issue a token using the stored identity.
+        // The persisted email must match the JWT email claim.
         String email = jdbc.queryForObject("select email from app_users where id=?", String.class, vendorAUser);
         vendorAToken = jwtService.issueAccessToken(
                 new MarketHubPrincipal(vendorAUser, email, "not-used", UserRole.VENDOR, true));
