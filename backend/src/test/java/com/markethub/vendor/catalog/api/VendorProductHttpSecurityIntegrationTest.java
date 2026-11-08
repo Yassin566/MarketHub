@@ -39,6 +39,8 @@ class VendorProductHttpSecurityIntegrationTest {
     private UUID vendorAUser;
     private UUID vendorAProduct;
     private UUID vendorBProduct;
+    private UUID vendorAStore;
+    private UUID vendorBStore;
     private String vendorAToken;
 
     @BeforeEach
@@ -48,6 +50,8 @@ class VendorProductHttpSecurityIntegrationTest {
         UUID vendorB = createVendor(createUser("vendor-b-" + UUID.randomUUID() + "@example.test"), "Vendor B");
         vendorAProduct = createProduct(vendorA, "Vendor A product", "vendor-a-" + UUID.randomUUID());
         vendorBProduct = createProduct(vendorB, "Vendor B product", "vendor-b-" + UUID.randomUUID());
+        vendorAStore = createStore(vendorA, "Vendor A Store", "vendor-a-store-" + UUID.randomUUID());
+        vendorBStore = createStore(vendorB, "Vendor B Store", "vendor-b-store-" + UUID.randomUUID());
 
         // The persisted email must match the JWT email claim.
         String email = jdbc.queryForObject("select email from app_users where id=?", String.class, vendorAUser);
@@ -62,6 +66,43 @@ class VendorProductHttpSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(vendorAProduct.toString())))
                 .andExpect(content().string(not(containsString(vendorBProduct.toString()))));
+    }
+
+    @Test
+    void vendorStoreReadReturnsOnlyTheAuthenticatedVendorsStore() throws Exception {
+        mockMvc.perform(get("/api/v1/vendor/store")
+                        .header("Authorization", "Bearer " + vendorAToken))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(vendorAStore.toString())))
+                .andExpect(content().string(containsString("Vendor A Store")))
+                .andExpect(content().string(not(containsString(vendorBStore.toString()))))
+                .andExpect(content().string(not(containsString("Vendor B Store"))));
+    }
+
+    @Test
+    void vendorStoreUpdateCannotMutateAnotherVendorsStore() throws Exception {
+        String body = """
+                {
+                  "storeName": "Vendor A Updated",
+                  "slug": "vendor-a-updated",
+                  "description": "updated by vendor A",
+                  "logoUrl": null,
+                  "supportEmail": null,
+                  "supportPhone": null
+                }
+                """;
+
+        mockMvc.perform(put("/api/v1/vendor/store")
+                        .header("Authorization", "Bearer " + vendorAToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Vendor A Updated")))
+                .andExpect(content().string(not(containsString("Vendor B Store"))));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "Vendor B Store",
+                jdbc.queryForObject("select store_name from store_profiles where id=?", String.class, vendorBStore));
     }
 
     @Test
@@ -110,6 +151,13 @@ class VendorProductHttpSecurityIntegrationTest {
         UUID id = UUID.randomUUID();
         jdbc.update("insert into vendors(id,owner_user_id,display_name,status) values (?,?,?,'APPROVED')",
                 id, ownerId, name);
+        return id;
+    }
+
+    private UUID createStore(UUID vendorId, String name, String slug) {
+        UUID id = UUID.randomUUID();
+        jdbc.update("insert into store_profiles(id,vendor_id,store_name,slug) values (?,?,?,?)",
+                id, vendorId, name, slug);
         return id;
     }
 
