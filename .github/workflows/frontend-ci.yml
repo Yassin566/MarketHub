@@ -30,7 +30,7 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         working-directory: frontend
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Run frontend unit tests
         working-directory: frontend
         run: npm test
