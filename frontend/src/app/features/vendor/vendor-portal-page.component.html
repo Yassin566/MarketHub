@@ -1,0 +1,100 @@
+<section class="vendor-shell">
+  <div class="vendor-heading">
+    <div><span class="eyebrow">VENDOR WORKSPACE</span><h1>Your store, in motion.</h1><p>Manage products, stock and fulfilment from one place.</p></div>
+    <button class="secondary-button" type="button" (click)="load()" [disabled]="loading()">↻ Refresh data</button>
+  </div>
+
+  @if(error()){<div class="vendor-alert" role="alert">{{error()}}</div>}
+  @if(notice()){<div class="vendor-notice" role="status">{{notice()}}</div>}
+  @if(loading()){<div class="catalog-state" role="status">Loading your vendor workspace...</div>}
+  @else {
+    <nav class="vendor-tabs" aria-label="Vendor workspace sections">
+      <button type="button" [class.active]="activeTab()==='overview'" (click)="setTab('overview')">Overview</button>
+      <button type="button" [class.active]="activeTab()==='products'" (click)="setTab('products')">Products <span>{{productCount()}}</span></button>
+      <button type="button" [class.active]="activeTab()==='inventory'" (click)="setTab('inventory')">Inventory <span>{{lowStockCount()}} low</span></button>
+      <button type="button" [class.active]="activeTab()==='orders'" (click)="setTab('orders')">Orders <span>{{openOrderCount()}} open</span></button>
+    </nav>
+
+    @if(activeTab()==='overview'){
+      <div class="vendor-metrics">
+        <article class="vendor-metric"><span>ACTIVE PRODUCTS</span><strong>{{productCount()}}</strong><p>Products in your catalogue</p></article>
+        <article class="vendor-metric"><span>LOW AVAILABLE STOCK</span><strong>{{lowStockCount()}}</strong><p>Products with 5 or fewer units available</p></article>
+        <article class="vendor-metric"><span>OPEN VENDOR ORDERS</span><strong>{{openOrderCount()}}</strong><p>Paid or currently processing</p></article>
+      </div>
+      <div class="vendor-overview-grid">
+        <article class="vendor-panel">
+          <span class="eyebrow">GET STARTED</span><h2>Keep your store moving.</h2>
+          <p>Keep product information current, adjust stock with an audit trail, and move paid orders through fulfilment.</p>
+          <div class="vendor-quick-actions">
+            <button class="primary-button" type="button" (click)="setTab('products')">Manage products ↗</button>
+            <button class="secondary-button" type="button" (click)="setTab('inventory')">Update inventory</button>
+            <button class="secondary-button" type="button" (click)="setTab('orders')">Process orders</button>
+          </div>
+        </article>
+        <article class="vendor-panel">
+          <span class="eyebrow">LATEST ORDERS</span><h2>Recent activity.</h2>
+          @if(orders().length===0){<p>No vendor orders yet. New paid orders will appear here.</p>}
+          @else{
+            @for(order of orders().slice(0,4);track order.id){
+              <div class="vendor-recent-order"><div><strong>{{order.items[0]?.productName || 'Marketplace order'}}</strong><small>{{order.createdAt|date:'mediumDate'}} · {{order.id.slice(0,8)}}</small></div><span class="status-pill">{{order.status}}</span></div>
+            }
+          }
+        </article>
+      </div>
+    }
+
+    @if(activeTab()==='products'){
+      <div class="vendor-section-heading"><div><span class="eyebrow">CATALOGUE</span><h2>Products</h2><p>Create, update or archive the products in your store.</p></div></div>
+      <div class="vendor-form-panel">
+        <h3>{{editingProduct()?'Edit product':'Add a product'}}</h3>
+        <form class="vendor-product-form" (ngSubmit)="saveProduct()">
+          <label>Product name<input name="productName" [(ngModel)]="productName" required minlength="2" maxlength="180" /></label>
+          <label>URL slug<input name="productSlug" [(ngModel)]="productSlug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" maxlength="200" placeholder="example-product" /></label>
+          <label>Price<input name="productPrice" type="number" [(ngModel)]="productPrice" required min="0" step="0.0001" /></label>
+          <label>Currency<select name="productCurrency" [(ngModel)]="productCurrency"><option value="TND">TND</option><option value="EUR">EUR</option><option value="USD">USD</option></select></label>
+          <label class="wide-field">Description<textarea name="productDescription" [(ngModel)]="productDescription" maxlength="4000" rows="3"></textarea></label>
+          <div class="wide-field vendor-form-actions"><button class="primary-button" type="submit" [disabled]="busy()">{{busy()?'Saving...':editingProduct()?'Save changes':'Create product'}}</button>@if(editingProduct()){<button class="secondary-button" type="button" (click)="resetProductForm()">Cancel edit</button>}</div>
+        </form>
+      </div>
+      <div class="vendor-table-wrap">
+        <table class="vendor-table"><thead><tr><th>Product</th><th>Price</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead><tbody>
+          @for(product of products();track product.id){
+            <tr><td><strong>{{product.name}}</strong><small>/{{product.slug}}</small></td><td>{{product.price|currency:product.currency}}</td><td><span class="status-pill">{{product.status}}</span></td><td>{{product.updatedAt|date:'mediumDate'}}</td><td class="vendor-row-actions"><button type="button" (click)="editProduct(product)">Edit</button><button type="button" class="danger-action" (click)="archiveProduct(product)" [disabled]="busy()">Archive</button></td></tr>
+          }@empty{<tr><td colspan="5" class="vendor-empty-cell">No active products yet. Add your first product above.</td></tr>}
+        </tbody></table>
+      </div>
+    }
+
+    @if(activeTab()==='inventory'){
+      <div class="vendor-section-heading"><div><span class="eyebrow">STOCK CONTROL</span><h2>Inventory</h2><p>Available stock excludes quantities reserved for customer orders.</p></div></div>
+      <div class="vendor-table-wrap"><table class="vendor-table"><thead><tr><th>Product</th><th>On hand</th><th>Reserved</th><th>Available</th><th>Version</th><th></th></tr></thead><tbody>
+        @for(item of inventory();track item.productId){
+          <tr><td><strong>{{item.productName}}</strong></td><td>{{item.onHandQuantity}}</td><td>{{item.reservedQuantity}}</td><td><span [class.low-stock]="item.availableQuantity<=5">{{item.availableQuantity}}</span></td><td>{{item.version}}</td><td><button class="table-action" type="button" (click)="openAdjustment(item)">Adjust stock</button></td></tr>
+        }@empty{<tr><td colspan="6" class="vendor-empty-cell">Inventory will appear when you add products.</td></tr>}
+      </tbody></table></div>
+      @if(adjustmentTarget();as target){
+        <div class="vendor-form-panel adjustment-panel"><div class="vendor-section-heading"><div><span class="eyebrow">AUDITED STOCK CHANGE</span><h3>{{target.productName}}</h3><p>Current on-hand: {{target.onHandQuantity}} · Reserved: {{target.reservedQuantity}} · Available: {{target.availableQuantity}}</p></div><button class="text-button" type="button" (click)="adjustmentTarget.set(null)">Close</button></div>
+          <form class="vendor-inline-form" (ngSubmit)="applyAdjustment()"><label>Quantity change<input name="quantityDelta" type="number" [(ngModel)]="quantityDelta" required step="1" /></label><label>Reason<select name="adjustmentReason" [(ngModel)]="adjustmentReason"><option value="RESTOCK">Restock</option><option value="CORRECTION">Correction</option><option value="DAMAGE">Damage</option><option value="RETURN">Return</option></select></label><button class="primary-button" type="submit" [disabled]="busy()||!quantityDelta">{{busy()?'Saving...':'Save adjustment'}}</button></form>
+          <p class="fine-print">Stock cannot be reduced below the quantity already reserved for customers. The server records each adjustment and checks the inventory version.</p>
+        </div>
+      }
+    }
+
+    @if(activeTab()==='orders'){
+      <div class="vendor-section-heading"><div><span class="eyebrow">FULFILMENT</span><h2>Vendor orders</h2><p>Process paid orders and record shipment details when dispatching.</p></div></div>
+      @for(order of orders();track order.id){
+        <article class="vendor-order-card">
+          <div class="vendor-order-top"><div><span class="eyebrow">ORDER {{order.id.slice(0,8)}}</span><h3>{{order.items.length}} line items</h3><small>{{order.createdAt|date:'medium'}}</small></div><span class="status-pill">{{order.status}}</span></div>
+          <div class="vendor-order-lines">@for(line of order.items;track line.id){<div><span>{{line.productName}} × {{line.quantity}}</span><strong>{{line.lineTotal|currency:line.currency}}</strong></div>}</div>
+          @if(order.shipment){<div class="vendor-shipment"><strong>Shipment · {{order.shipment.carrier}}</strong><span>Tracking: {{order.shipment.trackingNumber}}</span>@if(order.shipment.trackingUrl){<a [href]="order.shipment.trackingUrl" target="_blank" rel="noopener noreferrer">Open tracking ↗</a>}@if(order.shipment.estimatedDeliveryDate){<small>Estimated delivery: {{order.shipment.estimatedDeliveryDate}}</small>}</div>}
+          <div class="vendor-order-footer"><strong>Subtotal {{order.subtotal|currency:order.currency}}</strong><div>@if(order.status==='PAID'){<button class="primary-button" type="button" (click)="startProcessing(order)" [disabled]="busy()">Start processing</button>}@else if(order.status==='PROCESSING'){<button class="primary-button" type="button" (click)="openDispatch(order)">Record dispatch</button>}</div></div>
+        </article>
+      }@empty{<div class="customer-empty"><h2>No orders to process.</h2><p>Paid orders for your store will appear here.</p></div>}
+      @if(dispatchTarget();as target){
+        <div class="vendor-form-panel dispatch-panel"><div class="vendor-section-heading"><div><span class="eyebrow">SHIPMENT DETAILS</span><h3>Dispatch order {{target.id.slice(0,8)}}</h3><p>Recording dispatch will mark this vendor order as fulfilled.</p></div><button class="text-button" type="button" (click)="dispatchTarget.set(null)">Close</button></div>
+          <form class="vendor-product-form" (ngSubmit)="dispatch()"><label>Carrier<input name="carrier" [(ngModel)]="carrier" required maxlength="80" /></label><label>Tracking number<input name="trackingNumber" [(ngModel)]="trackingNumber" required maxlength="120" /></label><label class="wide-field">Tracking URL (optional)<input name="trackingUrl" type="url" [(ngModel)]="trackingUrl" maxlength="2048" placeholder="https://" /></label><label>Estimated delivery<input name="estimatedDeliveryDate" type="date" [(ngModel)]="estimatedDeliveryDate" /></label><div class="wide-field vendor-form-actions"><button class="primary-button" type="submit" [disabled]="busy()||!carrier.trim()||!trackingNumber.trim()">{{busy()?'Saving...':'Confirm dispatch'}}</button></div></form>
+        </div>
+      }
+    }
+  }
+</section>
