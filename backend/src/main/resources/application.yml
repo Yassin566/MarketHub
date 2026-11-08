@@ -22,6 +22,16 @@ security.jwt:
   issuer: ${JWT_ISSUER:markethub}
   access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
 management.endpoints.web.exposure.include: health,info,metrics
+markethub:
+  outbox:
+    worker:
+      # Enable only after registering the handlers required by the deployment.
+      enabled: ${MARKETHUB_OUTBOX_WORKER_ENABLED:false}
+      poll-interval: ${MARKETHUB_OUTBOX_WORKER_POLL_INTERVAL:PT5S}
+      batch-size: ${MARKETHUB_OUTBOX_WORKER_BATCH_SIZE:20}
+      lease-duration: ${MARKETHUB_OUTBOX_WORKER_LEASE_DURATION:PT2M}
+      base-backoff: ${MARKETHUB_OUTBOX_WORKER_BASE_BACKOFF:PT10S}
+      max-backoff: ${MARKETHUB_OUTBOX_WORKER_MAX_BACKOFF:PT15M}
 server:
   port: ${PORT:8080}
   shutdown: graceful
