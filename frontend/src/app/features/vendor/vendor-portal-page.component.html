@@ -9,11 +9,63 @@
   @if(loading()){<div class="catalog-state" role="status">Loading your vendor workspace...</div>}
   @else {
     <nav class="vendor-tabs" aria-label="Vendor workspace sections">
+      <button type="button" [class.active]="activeTab()==='analytics'" (click)="setTab('analytics')">Analytics</button>
       <button type="button" [class.active]="activeTab()==='overview'" (click)="setTab('overview')">Overview</button>
       <button type="button" [class.active]="activeTab()==='products'" (click)="setTab('products')">Products <span>{{productCount()}}</span></button>
       <button type="button" [class.active]="activeTab()==='inventory'" (click)="setTab('inventory')">Inventory <span>{{lowStockCount()}} low</span></button>
       <button type="button" [class.active]="activeTab()==='orders'" (click)="setTab('orders')">Orders <span>{{openOrderCount()}} open</span></button>
     </nav>
+
+
+    @if(activeTab()==='analytics'){
+      <div class="vendor-section-heading">
+        <div><span class="eyebrow">BUSINESS PERFORMANCE</span><h2>Sales analytics</h2><p>Recognized revenue includes paid, processing and fulfilled orders. Amounts stay grouped by currency.</p></div>
+      </div>
+      <form class="analytics-filters" (ngSubmit)="loadAnalytics()">
+        <label>From<input name="analyticsFrom" type="date" [(ngModel)]="analyticsFrom" required /></label>
+        <label>To<input name="analyticsTo" type="date" [(ngModel)]="analyticsTo" required /></label>
+        <button class="primary-button" type="submit" [disabled]="analyticsLoading()">{{analyticsLoading()?'Loading...':'Apply range'}}</button>
+      </form>
+      @if(analyticsError()){<div class="vendor-alert" role="alert">{{analyticsError()}}</div>}
+      @if(analyticsLoading()){<div class="catalog-state" role="status">Loading sales analytics...</div>}
+      @else if(analytics();as report){
+        <div class="analytics-range">Reporting period: {{report.from}} to {{report.to}} · UTC calendar days</div>
+        @if(report.currencies.length===0){<div class="customer-empty"><h2>No sales in this period.</h2><p>Paid orders will appear here once customers complete checkout.</p></div>}
+        @else{
+          @for(summary of report.currencies;track summary.currency){
+            <section class="analytics-currency">
+              <div class="analytics-currency-heading"><div><span class="eyebrow">CURRENCY</span><h3>{{summary.currency}}</h3></div><div class="analytics-revenue"><small>RECOGNIZED REVENUE</small><strong>{{summary.recognizedRevenue|currency:summary.currency}}</strong></div></div>
+              <div class="vendor-metrics analytics-metrics">
+                <article class="vendor-metric"><span>ORDERS</span><strong>{{summary.orderCount}}</strong><p>All order statuses</p></article>
+                <article class="vendor-metric"><span>PAID / ACTIVE</span><strong>{{summary.paidOrderCount}}</strong><p>Paid, processing or fulfilled</p></article>
+                <article class="vendor-metric"><span>FULFILLED</span><strong>{{summary.fulfilledOrderCount}}</strong><p>Successfully dispatched</p></article>
+              </div>
+              <div class="analytics-status-line"><span>Processing <b>{{summary.processingOrderCount}}</b></span><span>Cancelled <b>{{summary.cancelledOrderCount}}</b></span></div>
+              <div class="vendor-panel analytics-chart-panel">
+                <div class="analytics-panel-heading"><div><span class="eyebrow">DAILY PERFORMANCE</span><h3>Revenue trend</h3></div></div>
+                @if(dailyForCurrency(summary.currency).length===0){<p class="muted">No daily activity in this period.</p>}
+                @else{
+                  <div class="analytics-bars">
+                    @for(day of dailyForCurrency(summary.currency);track day.date){
+                      <div class="analytics-bar-row"><time>{{day.date}}</time><div class="analytics-bar-track"><span [style.width.%]="dailyBarWidth(day)"></span></div><strong>{{day.recognizedRevenue|currency:summary.currency}}</strong><small>{{day.orderCount}} orders</small></div>
+                    }
+                  </div>
+                }
+              </div>
+            </section>
+          }
+          <section class="vendor-panel analytics-products-panel">
+            <div class="analytics-panel-heading"><div><span class="eyebrow">BEST SELLERS</span><h3>Top products</h3><p>Ranked by recognized revenue across currencies.</p></div></div>
+            @if(report.topProducts.length===0){<p class="muted">No paid product sales in this period.</p>}
+            @else{
+              <div class="vendor-table-wrap analytics-product-table"><table class="vendor-table"><thead><tr><th>Product</th><th>Units sold</th><th>Revenue</th></tr></thead><tbody>
+                @for(product of report.topProducts;track product.productId + product.currency){<tr><td><strong>{{product.productName}}</strong><small>{{product.currency}}</small></td><td>{{product.unitsSold}}</td><td>{{product.recognizedRevenue|currency:product.currency}}</td></tr>}
+              </tbody></table></div>
+            }
+          </section>
+        }
+      }
+    }
 
     @if(activeTab()==='overview'){
       <div class="vendor-metrics">
