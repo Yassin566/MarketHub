@@ -148,6 +148,43 @@ class CustomerOrderHttpSecurityIntegrationTest {
                         .header("Idempotency-Key", UUID.randomUUID().toString()))
                 .andExpect(status().isForbidden());
     }
+ 
+    @Test
+    void customerCanPageThroughOnlyTheirOwnOrderHistory() throws Exception {
+        addToCart(1);
+        mockMvc.perform(post("/api/v1/customer/orders/checkout")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .header("Idempotency-Key", UUID.randomUUID().toString()))
+                .andExpect(status().isOk());
+        addToCart(1);
+        mockMvc.perform(post("/api/v1/customer/orders/checkout")
+                        .header("Authorization", "Bearer " + customerToken)
+                        .header("Idempotency-Key", UUID.randomUUID().toString()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/customer/orders?limit=1&offset=0")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.orders.length()").value(1))
+                .andExpect(jsonPath("$.data.hasMore").value(true))
+                .andExpect(jsonPath("$.data.orders[0].items.length()").value(1));
+
+        mockMvc.perform(get("/api/v1/customer/orders?limit=1&offset=1")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.orders.length()").value(1))
+                .andExpect(jsonPath("$.data.hasMore").value(false));
+    }
+
+    @Test
+    void orderHistoryRejectsInvalidPagination() throws Exception {
+        mockMvc.perform(get("/api/v1/customer/orders?limit=101")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/customer/orders?offset=-1")
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isBadRequest());
+    }
 
     private void addToCart(long quantity) throws Exception {
         mockMvc.perform(put("/api/v1/customer/cart/items")
