@@ -29,3 +29,7 @@ Product request fields: name, slug, optional description, price (non-negative de
 - Vendor ownership is always resolved from the authenticated principal, not request parameters.
 - Database uniqueness constraints enforce one store per vendor and unique store/product slugs.
 - Soft archive preserves historical product rows.
+
+## Automated security verification
+
+`VendorProductHttpSecurityIntegrationTest` exercises the real bearer-token filter, Spring Security chain, MVC controller, and PostgreSQL-backed tenant queries. It verifies that a vendor's product list excludes another vendor's product and that attempts to update or archive a foreign product return HTTP 404 without changing the foreign row.
