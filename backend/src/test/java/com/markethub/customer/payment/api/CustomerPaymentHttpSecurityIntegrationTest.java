@@ -64,7 +64,7 @@ class CustomerPaymentHttpSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("REQUESTED"))
                 .andExpect(jsonPath("$.data.providerCode").value("UNCONFIGURED"))
-                .andExpect(jsonPath("$.data.amount").value(12.5))
+                .andExpect(jsonPath("$.data.currency").value("USD"))
                 .andReturn();
         String paymentId = com.jayway.jsonpath.JsonPath.read(
                 first.getResponse().getContentAsString(), "$.data.id");
@@ -77,6 +77,9 @@ class CustomerPaymentHttpSecurityIntegrationTest {
 
         org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
                 "select count(*) from payments where order_id=?", Long.class, orderId)).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select amount from payments where order_id=?", java.math.BigDecimal.class, orderId))
+                .isEqualByComparingTo("12.5000");
         org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
                 "select count(*) from transactional_outbox where aggregate_id=?",
                 Long.class, UUID.fromString(paymentId))).isEqualTo(1L);
