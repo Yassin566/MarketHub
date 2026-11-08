@@ -41,7 +41,7 @@ class VendorProductTenantIsolationTest {
  @Test void archiveCannotMutateProductOutsideResolvedVendor(){
   UUID user=UUID.randomUUID(),ownVendor=UUID.randomUUID(),foreignProduct=UUID.randomUUID();
   when(access.requireApprovedVendor(user)).thenReturn(ownVendor);
-  when(jdbc.update(contains("set status='ARCHIVED'"),eq(foreignProduct),eq(ownVendor))).thenReturn(0);
+  when(jdbc.update(contains("status='ARCHIVED'"),eq(foreignProduct),eq(ownVendor))).thenReturn(0);
   assertThrows(ResourceNotFoundException.class,()->service.archive(user,foreignProduct));
  }
 }
