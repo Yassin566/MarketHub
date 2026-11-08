@@ -74,7 +74,7 @@ class CustomerInventoryReservationHttpSecurityIntegrationTest {
         mockMvc.perform(delete("/api/v1/customer/reservations/{id}", reservationId)
                         .header("Authorization", "Bearer " + customerToken))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("\"status\":\"RELEASED\"")))
+                .andExpect(content().string(containsString("\"status\":\"RELEASED\"")));
 
         org.junit.jupiter.api.Assertions.assertEquals(0L,
                 jdbc.queryForObject("select reserved_quantity from product_inventory where product_id=?",
