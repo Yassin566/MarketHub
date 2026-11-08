@@ -1,39 +1,15 @@
 import {Component, inject, signal} from '@angular/core';
 import {CurrencyPipe} from '@angular/common';
-import {ActivatedRoute, RouterLink} from '@angular/router';
-import {CatalogService, Product} from '../../core/catalog/catalog.service';
-
-@Component({
-  standalone: true,
-  imports: [CurrencyPipe, RouterLink],
-  template: `
-    <section class="detail-shell">
-      <a class="back-link" routerLink="/products">← Back to discover</a>
-      @if (loading()) { <div class="catalog-state">Loading product...</div> }
-      @else if (error()) { <div class="catalog-state catalog-error" role="alert">{{ error() }} <a routerLink="/products">Return to catalogue</a></div> }
-      @else if (product(); as item) {
-        <div class="detail-layout"><div class="detail-art"><span>m.</span><small>MARKETHUB FIND</small></div>
-          <div class="detail-copy"><span class="eyebrow">INDEPENDENT STORE</span><h1>{{ item.name }}</h1>
-            <div class="detail-price">{{ item.price | currency:item.currency:'symbol':'1.2-2' }}</div>
-            <p>Discover this find from the MarketHub marketplace. Store and product details are provided by the seller.</p>
-            <div class="detail-note">Secure checkout and cart features are coming in the next customer experience phase.</div>
-            <a class="primary-button" routerLink="/products">Continue exploring <span>↗</span></a>
-          </div>
-        </div>
-      }
-    </section>`
-})
-export class ProductDetailPageComponent {
-  private readonly catalog = inject(CatalogService);
-  private readonly route = inject(ActivatedRoute);
-  readonly product = signal<Product | null>(null);
-  readonly loading = signal(true);
-  readonly error = signal('');
-  constructor() {
-    const slug = this.route.snapshot.paramMap.get('slug') ?? '';
-    this.catalog.get(slug).subscribe({
-      next: response => { this.product.set(response.data); this.loading.set(false); },
-      error: () => { this.error.set('This product is unavailable or has been removed.'); this.loading.set(false); }
-    });
-  }
+import {ActivatedRoute,RouterLink} from '@angular/router';
+import {CatalogService,Product} from '../../core/catalog/catalog.service';
+import {AuthService} from '../../core/auth/auth.service';
+import {CustomerService} from '../../core/customer/customer.service';
+@Component({standalone:true,imports:[CurrencyPipe,RouterLink],template:`
+<section class="detail-shell"><a class="back-link" routerLink="/products">← Back to discover</a>
+@if(loading()){<div class="catalog-state">Loading product...</div>}@else if(error()){<div class="catalog-state catalog-error" role="alert">{{error()}} <a routerLink="/products">Return to catalogue</a></div>}@else if(product();as item){<div class="detail-layout"><div class="detail-art"><span>m.</span><small>MARKETHUB FIND</small></div><div class="detail-copy"><span class="eyebrow">INDEPENDENT STORE</span><h1>{{item.name}}</h1><div class="detail-price">{{item.price|currency:item.currency:'symbol':'1.2-2'}}</div><p>Discover this find from the MarketHub marketplace. Store and product details are provided by the seller.</p>@if(auth.user()?.role==='CUSTOMER'){<div class="add-cart-row"><label>Quantity <input type="number" min="1" max="1000" [value]="quantity()" (input)="quantity.set(+$any($event.target).value)"></label><button class="primary-button" type="button" (click)="addToCart(item)" [disabled]="adding()"> {{adding()?'Adding...':'Add to cart'}}</button></div>}@else{<a class="primary-button" routerLink="/login">Sign in to add to cart <span>→</span></a>}@if(message()){<p class="cart-message" role="status">{{message()}}</p>}<div class="detail-note">Prices and available stock are rechecked by the server during checkout.</div><a class="back-link" routerLink="/products">Continue exploring</a></div></div>}</section>`})
+export class ProductDetailPageComponent{
+ private catalog=inject(CatalogService);private route=inject(ActivatedRoute);private customer=inject(CustomerService);readonly auth=inject(AuthService);
+ readonly product=signal<Product|null>(null);readonly loading=signal(true);readonly error=signal('');readonly quantity=signal(1);readonly adding=signal(false);readonly message=signal('');
+ constructor(){const slug=this.route.snapshot.paramMap.get('slug')??'';this.catalog.get(slug).subscribe({next:r=>{this.product.set(r.data);this.loading.set(false);},error:()=>{this.error.set('This product is unavailable or has been removed.');this.loading.set(false);}});}
+ addToCart(item:Product){const q=this.quantity();if(!Number.isInteger(q)||q<1||q>1000){this.message.set('Choose a quantity between 1 and 1000.');return;}this.adding.set(true);this.message.set('');this.customer.putItem(item.id,q).subscribe({next:()=>{this.adding.set(false);this.message.set('Added to your cart.');},error:()=>{this.adding.set(false);this.message.set('Could not add this product. Please check stock and try again.');}});}
 }
