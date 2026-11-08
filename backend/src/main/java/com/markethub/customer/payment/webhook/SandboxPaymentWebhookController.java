@@ -31,10 +31,8 @@ public class SandboxPaymentWebhookController {
         this.secret = secret == null ? "" : secret;
     }
 
-    public record WebhookResult(boolean duplicate, String outcome) {}
-
     @PostMapping("/sandbox")
-    public ApiResponse<WebhookResult> receive(
+    public ApiResponse<SandboxPaymentWebhookService.WebhookResult> receive(
             @RequestHeader("X-MarketHub-Event-Id") String eventId,
             @RequestHeader("X-MarketHub-Timestamp") String timestamp,
             @RequestHeader("X-MarketHub-Signature") String signature,
