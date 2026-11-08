@@ -10,6 +10,7 @@ export const routes:Routes=[
  {path:'orders/:id',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/order-detail-page.component').then(m=>m.OrderDetailPageComponent)},
  {path:'login',canActivate:[guestGuard],data:{mode:'login'},loadComponent:()=>import('./features/auth/auth-page.component').then(m=>m.AuthPageComponent)},
  {path:'register',canActivate:[guestGuard],data:{mode:'register'},loadComponent:()=>import('./features/auth/auth-page.component').then(m=>m.AuthPageComponent)},
+ {path:'vendor',canActivate:[authGuard,roleGuard(['VENDOR'])],loadComponent:()=>import('./features/vendor/vendor-portal-page.component').then(m=>m.VendorPortalPageComponent)},
  {path:'account',canActivate:[authGuard],redirectTo:'orders'},
  {path:'**',redirectTo:''}
 ];
