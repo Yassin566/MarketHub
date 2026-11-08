@@ -16,7 +16,7 @@ A customer payment request locks the parent order and its reservation rows, veri
 
 ## Transactional outbox delivery
 
-Outbox claims use `FOR UPDATE SKIP LOCKED`, bounded batches, attempt limits, and expiring lease tokens. A worker must process events outside the claim transaction and use the lease token to complete or reschedule them. A stale worker cannot complete an event after another worker has reclaimed its lease. Provider-side idempotency remains mandatory because a worker can crash after a provider accepts a request but before the outbox row is acknowledged.
+Outbox claims use `FOR UPDATE SKIP LOCKED`, bounded batches, attempt limits, and expiring lease tokens. The optional scheduled worker is disabled by default, skips polling without registered handlers, invokes handlers outside claim transactions, and acknowledges/reschedules only with the current lease token. Delivery is at-least-once, so every handler must be idempotent. Failed events use capped exponential backoff and move to `DEAD` after ten claims. Provider-side idempotency remains mandatory because a worker can crash after a remote system accepts a request but before the outbox row is acknowledged.
 
 ## Orders and money
 
