@@ -1,0 +1,4 @@
+import {inject} from '@angular/core'; import {CanActivateFn,Router} from '@angular/router'; import {AuthService} from './auth.service';
+export const authGuard:CanActivateFn=()=>{const a=inject(AuthService);return a.isAuthenticated()?true:inject(Router).createUrlTree(['/login']);};
+export const guestGuard:CanActivateFn=()=>inject(AuthService).isAuthenticated()?inject(Router).createUrlTree(['/']):true;
+export const roleGuard=(roles:string[]):CanActivateFn=>()=>{const a=inject(AuthService),u=a.user();if(!u)return inject(Router).createUrlTree(['/login']);return roles.includes(u.role)?true:inject(Router).createUrlTree(['/']);};
