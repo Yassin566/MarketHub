@@ -18,11 +18,11 @@ Request fields: storeName, slug, optional description, logoUrl, supportEmail, su
 
 ## Vendor products (approved vendor)
 - GET /vendor/products — list this vendor's non-archived products.
-- POST /vendor/products — create an ACTIVE product.
-- PUT /vendor/products/{productId} — update a product owned by this vendor.
+- POST /vendor/products — create an ACTIVE product; omit expectedVersion.
+- PUT /vendor/products/{productId} — update a product owned by this vendor; include the expectedVersion returned by GET/POST.
 - DELETE /vendor/products/{productId} — soft-archive a product.
 
-Product request fields: name, slug, optional description, price (non-negative decimal, up to four fractional digits), and uppercase three-letter currency. Updates use database versioning for optimistic concurrency. Product IDs belonging to another vendor are treated as not found.
+Product request fields: name, slug, optional description, price (non-negative decimal, up to four fractional digits), and uppercase three-letter currency. Updates require expectedVersion and use a compare-and-set database update; stale versions return HTTP 409 rather than overwriting a newer edit. Product IDs belonging to another vendor are treated as not found.
 
 ## Security and persistence notes
 - Admin review routes require ADMIN or SUPER_ADMIN through method-level authorization.
