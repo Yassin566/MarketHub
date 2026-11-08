@@ -14,6 +14,10 @@ Order creation locks the customer's cart and product/inventory rows in stable pr
 
 A customer payment request locks the parent order and its reservation rows, verifies that all stock reservations remain active, and writes the payment attempt and `PAYMENT_REQUESTED` outbox event in one transaction. Provider calls must be performed by an outbox dispatcher outside that transaction. Provider callbacks must be authenticated, deduplicated, and reconciled before any payment/order state transition. Late payment success after reservation expiry must not automatically mark an order paid; it requires an explicit compensation or manual-review policy.
 
+## Transactional outbox delivery
+
+Outbox claims use `FOR UPDATE SKIP LOCKED`, bounded batches, attempt limits, and expiring lease tokens. A worker must process events outside the claim transaction and use the lease token to complete or reschedule them. A stale worker cannot complete an event after another worker has reclaimed its lease. Provider-side idempotency remains mandatory because a worker can crash after a provider accepts a request but before the outbox row is acknowledged.
+
 ## Orders and money
 
 A parent order represents the customer's unified purchase; child vendor orders snapshot line items and currency. Current order totals include product line items only. Taxes, shipping, discounts, commission, and payout snapshots must be added before production payment/fulfillment. Use NUMERIC/BigDecimal and explicit currency/rounding policy. Historical commission must not be recalculated from current settings.
