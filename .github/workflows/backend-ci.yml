@@ -1,19 +1,65 @@
 name: backend-ci
+
 on:
   push:
-    paths: ["backend/**"]
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/**"
   pull_request:
-    paths: ["backend/**"]
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  test:
+  verify:
+    name: Backend verify (PostgreSQL 17)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: markethub_test
+          POSTGRES_USER: markethub
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U markethub -d markethub_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: jdbc:postgresql://localhost:5432/markethub_test
+      POSTGRES_USER: markethub
+      POSTGRES_PASSWORD: test_password
+      JWT_SECRET: ci-only-secret-key-that-is-at-least-32-bytes-long
+      JWT_ISSUER: markethub-ci
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - name: Verify
+          cache-dependency-path: backend/pom.xml
+
+      - name: Verify backend, Flyway migrations, and tests
         working-directory: backend
-        run: mvn --batch-mode verify
+        run: mvn --batch-mode --no-transfer-progress verify
