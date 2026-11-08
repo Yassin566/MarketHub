@@ -113,6 +113,7 @@ public class CustomerInventoryReservationService {
                 """, RESERVATION_MAPPER, nextStatus, reservationId, reservation.productName());
     }
 
+    @Transactional
     public List<ReservationView> list(UUID customerId) {
         expireDueReservations();
         return jdbc.query("""
