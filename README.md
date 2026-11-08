@@ -9,7 +9,7 @@ Multi-vendor marketplace foundation using a modular monolith.
 - Docker Compose, Nginx, GitHub Actions
 
 ## Current implementation
-The backend foundation includes customer identity, vendor lifecycle, vendor catalog and inventory, persistent carts and reservations, transactional order creation, payment request records, a lease-safe transactional outbox, and a deterministic sandbox payment provider. A signed sandbox webhook endpoint verifies HMAC signatures, deduplicates provider event IDs, and applies payment/order/inventory state changes transactionally. Late payment success after reservation expiry is held for review. The worker and webhook endpoint are disabled until explicitly configured.
+The backend foundation includes customer identity, vendor lifecycle, vendor catalog and inventory, persistent carts and reservations, transactional order creation, payment request records, a lease-safe transactional outbox, and a deterministic sandbox payment provider. A signed sandbox webhook endpoint verifies HMAC signatures, deduplicates provider event IDs, and applies payment/order/inventory state changes transactionally. Late payment success after reservation expiry is held for review. Read-only administrative payment endpoints expose payment attempts and provider-event history for investigation. The worker and webhook endpoint are disabled until explicitly configured.
 
 The sandbox provider and webhook are test infrastructure only: no production gateway, credentials, network calls, or real financial transactions are included. See `docs/` for API and architecture details.
 
