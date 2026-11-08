@@ -9,9 +9,9 @@ Multi-vendor marketplace foundation using a modular monolith.
 - Docker Compose, Nginx, GitHub Actions
 
 ## Current implementation
-The backend foundation includes customer registration/login, BCrypt password hashing, JWT bearer authentication, vendor application submission, admin approval/rejection with role activation only on approval, approved-vendor store profile management, tenant-scoped product CRUD/archive, a vendor-scoped public product listing, database migrations, and local infrastructure. See docs/vendor-management-api.md for the current vendor API.
+The backend foundation includes customer registration/login, BCrypt password hashing, JWT bearer authentication, vendor application submission, admin approval/rejection with role activation only on approval, approved-vendor store profile management, tenant-scoped product CRUD/archive, vendor inventory visibility and stock adjustments, and customer inventory reservations with automatic expiry. See the API guides in `docs/`.
 
-This is an incremental implementation, not a claim that every marketplace capability is complete. Refresh-token rotation, inventory, carts, checkout, payment integration, refunds, payouts, and full Angular business screens remain future work.
+This is an incremental implementation, not a claim that every marketplace capability is complete. Refresh-token rotation, persistent carts, checkout/order processing, payment integration, refunds, payouts, and full Angular business screens remain future work.
 
 ## Run locally
 ```bash
