@@ -3,14 +3,8 @@ name: backend-ci
 on:
   push:
     branches: [main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/**"
   pull_request:
     branches: [main]
-    paths:
-      - "backend/**"
-      - ".github/workflows/**"
   workflow_dispatch:
 
 concurrency:
