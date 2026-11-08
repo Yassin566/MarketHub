@@ -16,6 +16,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.time.Instant;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "markethub.payment.webhook.secret=test-webhook-secret")
 @AutoConfigureMockMvc
 @Transactional
 class CustomerPaymentHttpSecurityIntegrationTest {
@@ -129,6 +134,87 @@ class CustomerPaymentHttpSecurityIntegrationTest {
         org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
                 "select status from customer_orders where id=?", String.class, orderId))
                 .isEqualTo("PENDING_PAYMENT");
+    }
+
+    @Test
+    void signedSandboxSuccessWebhookConsumesStockAndDeduplicatesEvent() throws Exception {
+        UUID orderId = createOrder();
+        String request = mockMvc.perform(post("/api/v1/customer/orders/{orderId}/payments", orderId)
+                        .header("Authorization", "Bearer " + customerToken)
+                        .header("Idempotency-Key", UUID.randomUUID().toString()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        UUID paymentId = UUID.fromString(
+                com.jayway.jsonpath.JsonPath.read(request, "$.data.id"));
+        String paymentPayload = """
+                {"paymentId":"%s","orderId":"%s","amount":"12.5000","currency":"USD"}
+                """.formatted(paymentId, orderId);
+        paymentRequestedHandler.handle(new TransactionalOutboxService.OutboxMessage(
+                UUID.randomUUID(), "PAYMENT_REQUESTED", paymentPayload, 1, UUID.randomUUID()));
+        String providerReference = jdbc.queryForObject(
+                "select provider_reference from payments where id=?", String.class, paymentId);
+
+        String body = """
+                {"type":"payment.succeeded","providerReference":"%s","amount":"12.5000","currency":"USD"}
+                """.formatted(providerReference);
+        String eventId = UUID.randomUUID().toString();
+        String timestamp = Long.toString(Instant.now().getEpochSecond());
+        String signature = webhookSignature(timestamp, body);
+
+        mockMvc.perform(post("/api/v1/webhooks/payments/sandbox")
+                        .header("X-MarketHub-Event-Id", eventId)
+                        .header("X-MarketHub-Timestamp", timestamp)
+                        .header("X-MarketHub-Signature", signature)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.duplicate").value(false))
+                .andExpect(jsonPath("$.data.outcome").value("SUCCEEDED"));
+
+        mockMvc.perform(post("/api/v1/webhooks/payments/sandbox")
+                        .header("X-MarketHub-Event-Id", eventId)
+                        .header("X-MarketHub-Timestamp", timestamp)
+                        .header("X-MarketHub-Signature", signature)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.duplicate").value(true));
+
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select status from payments where id=?", String.class, paymentId)).isEqualTo("SUCCEEDED");
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select status from customer_orders where id=?", String.class, orderId)).isEqualTo("PAID");
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select status from vendor_orders where order_id=?", String.class, orderId)).isEqualTo("PAID");
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select status from inventory_reservations where order_id=?", String.class, orderId)).isEqualTo("CONSUMED");
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select on_hand_quantity from product_inventory where product_id=?", Long.class, productId)).isEqualTo(4L);
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select reserved_quantity from product_inventory where product_id=?", Long.class, productId)).isZero();
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select count(*) from payment_provider_events where event_id=?", Long.class, eventId)).isEqualTo(1L);
+    }
+
+    @Test
+    void invalidWebhookSignatureIsRejected() throws Exception {
+        String body = """
+                {"type":"payment.succeeded","providerReference":"sandbox-missing","amount":"1.00","currency":"USD"}
+                """;
+        mockMvc.perform(post("/api/v1/webhooks/payments/sandbox")
+                        .header("X-MarketHub-Event-Id", UUID.randomUUID().toString())
+                        .header("X-MarketHub-Timestamp", Long.toString(Instant.now().getEpochSecond()))
+                        .header("X-MarketHub-Signature", "sha256=invalid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private static String webhookSignature(String timestamp, String body) throws Exception {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        mac.init(new SecretKeySpec("test-webhook-secret".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+        return "sha256=" + HexFormat.of().formatHex(
+                mac.doFinal((timestamp + "." + body).getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test
