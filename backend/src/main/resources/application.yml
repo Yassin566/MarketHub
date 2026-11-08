@@ -23,6 +23,10 @@ security.jwt:
   access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
 management.endpoints.web.exposure.include: health,info,metrics
 markethub:
+  payment:
+    provider:
+      # Local deterministic adapter only; it never moves money.
+      mode: ${MARKETHUB_PAYMENT_PROVIDER_MODE:sandbox}
   outbox:
     worker:
       # Enable only after registering the handlers required by the deployment.
