@@ -14,15 +14,13 @@ import java.util.UUID;
 @Component
 public class PaymentRequestedEventHandler implements OutboxEventHandler {
     private final JdbcTemplate jdbc;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final PaymentProvider provider;
 
     public PaymentRequestedEventHandler(
             JdbcTemplate jdbc,
-            ObjectMapper objectMapper,
             PaymentProvider provider) {
         this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
         this.provider = provider;
     }
 
