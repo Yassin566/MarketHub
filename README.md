@@ -23,4 +23,7 @@ mvn spring-boot:run
 
 API base: `http://localhost:8080/api/v1`; health: `http://localhost:8080/actuator/health`.
 
+## CI
+Pull requests targeting `main` run backend verification on Java 21 with PostgreSQL 17, including Flyway startup/migration validation and Hibernate schema validation. See [docs/ci.md](docs/ci.md) for the workflow scope and remaining test coverage.
+
 See `docs/` for architecture, domain model, API conventions, security, and test strategy. Do not deploy without production secrets, TLS, provider configuration, monitoring, backups, threat modeling, and operational testing.
