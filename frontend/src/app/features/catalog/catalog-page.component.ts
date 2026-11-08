@@ -1,0 +1,64 @@
+import {Component, inject, signal} from '@angular/core';
+import {CurrencyPipe} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {RouterLink} from '@angular/router';
+import {CatalogService, Product} from '../../core/catalog/catalog.service';
+
+@Component({
+  standalone: true,
+  imports: [CurrencyPipe, FormsModule, RouterLink],
+  template: `
+    <section class="catalog-shell">
+      <div class="catalog-heading">
+        <div><span class="eyebrow">THE MARKETPLACE</span><h1>Discover something good.</h1>
+          <p>Explore products from independent stores, all in one place.</p></div>
+        <span class="catalog-count">{{ total() }} products</span>
+      </div>
+      <form class="catalog-search" (ngSubmit)="searchProducts()">
+        <label class="sr-only" for="catalog-search">Search products</label>
+        <input id="catalog-search" name="search" [(ngModel)]="query" placeholder="Search the marketplace..." />
+        <button class="primary-button" type="submit">Search</button>
+      </form>
+      @if (loading()) { <div class="catalog-state" role="status">Loading products...</div> }
+      @else if (error()) { <div class="catalog-state catalog-error" role="alert">{{ error() }}</div> }
+      @else if (products().length === 0) {
+        <div class="catalog-empty"><span>✳</span><h2>No products found</h2><p>Try another search, or check back soon as stores add new finds.</p>
+          @if (query) { <button class="secondary-button" type="button" (click)="clearSearch()">Clear search</button> }</div>
+      } @else {
+        <div class="product-grid">
+          @for (product of products(); track product.id) {
+            <a class="product-card" [routerLink]="['/products', product.slug]">
+              <div class="product-art"><span>m.</span><small>MARKETHUB FIND</small></div>
+              <div class="product-card-body"><span class="product-vendor">INDEPENDENT STORE</span>
+                <h2>{{ product.name }}</h2><div class="product-price">{{ product.price | currency:product.currency:'symbol':'1.2-2' }}</div>
+                <span class="product-view">View product <b>↗</b></span></div>
+            </a>
+          }
+        </div>
+        <div class="catalog-pagination"><button class="secondary-button" type="button" [disabled]="page() === 0" (click)="changePage(page()-1)">← Previous</button>
+          <span>Page {{ page()+1 }} of {{ pages() }}</span>
+          <button class="secondary-button" type="button" [disabled]="page()+1 >= pages()" (click)="changePage(page()+1)">Next →</button></div>
+      }
+    </section>`
+})
+export class CatalogPageComponent {
+  private readonly catalog = inject(CatalogService);
+  readonly products = signal<Product[]>([]);
+  readonly loading = signal(true);
+  readonly error = signal('');
+  readonly total = signal(0);
+  readonly pages = signal(1);
+  readonly page = signal(0);
+  query = '';
+  constructor() { this.load(); }
+  load(): void {
+    this.loading.set(true); this.error.set('');
+    this.catalog.list(this.page(), this.query).subscribe({
+      next: response => { this.products.set(response.data.content); this.total.set(response.data.totalElements); this.pages.set(Math.max(1, response.data.totalPages)); this.loading.set(false); },
+      error: () => { this.error.set('We could not load the catalogue. Please try again.'); this.loading.set(false); }
+    });
+  }
+  searchProducts(): void { this.page.set(0); this.load(); }
+  clearSearch(): void { this.query = ''; this.page.set(0); this.load(); }
+  changePage(page: number): void { this.page.set(page); this.load(); window.scrollTo({top: 0, behavior: 'smooth'}); }
+}
