@@ -25,11 +25,15 @@ management.endpoints.web.exposure.include: health,info,metrics
 markethub:
   payment:
     provider:
-      # Local deterministic adapter only; it never moves money.
       mode: ${MARKETHUB_PAYMENT_PROVIDER_MODE:sandbox}
     webhook:
-      # Empty by default: webhook endpoint remains unavailable until configured.
       secret: ${MARKETHUB_PAYMENT_WEBHOOK_SECRET:}
+    reconciliation:
+      worker:
+        enabled: ${MARKETHUB_PAYMENT_RECONCILIATION_ENABLED:false}
+        poll-interval: ${MARKETHUB_PAYMENT_RECONCILIATION_POLL_INTERVAL:PT1M}
+        stale-after: ${MARKETHUB_PAYMENT_RECONCILIATION_STALE_AFTER:PT30M}
+        batch-size: ${MARKETHUB_PAYMENT_RECONCILIATION_BATCH_SIZE:50}
   outbox:
     worker:
       enabled: ${MARKETHUB_OUTBOX_WORKER_ENABLED:false}
