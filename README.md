@@ -10,11 +10,11 @@ Multi-vendor marketplace foundation using a modular monolith.
 
 ## Current implementation
 
-The backend foundation includes customer registration/login, JWT bearer authentication, vendor application and approval lifecycle, vendor store profiles, tenant-scoped product and inventory management, customer carts and reservations, transactional order creation, and durable idempotent payment-request records with a transactional outbox. See the API guides in `docs/`.
+The backend foundation includes customer registration/login, JWT bearer authentication, vendor application and approval lifecycle, vendor store profiles, tenant-scoped product and inventory management, customer carts and reservations, transactional order creation, and durable idempotent payment-request records with a transactional outbox. Outbox delivery now has concurrent-safe claiming, expiring leases, stale-worker fencing, retry scheduling, and a terminal dead-letter state. See the API and architecture guides in `docs/`.
 
-Payment requests persist the order's server-calculated amount and currency. The outbox event is committed atomically with the payment attempt. No payment provider is configured yet: these records are not charges, orders remain pending payment, and fulfillment is not triggered.
+Payment requests persist the order's server-calculated amount and currency. The outbox event is committed atomically with the payment attempt. No payment provider is configured yet: these records are not charges, orders remain pending payment, and fulfillment is not triggered. The delivery service is not scheduled or enabled as a payment integration.
 
-This is an incremental implementation, not a claim that every marketplace capability is complete. Provider integration, outbox delivery, signed webhooks, refunds, taxes, shipping, commission/payout accounting, refresh-token rotation, and full Angular business screens remain future work.
+This is an incremental implementation, not a claim that every marketplace capability is complete. Provider integration, outbox worker orchestration, signed webhooks, refunds, taxes, shipping, commission/payout accounting, refresh-token rotation, and full Angular business screens remain future work.
 
 ## Run locally
 ```bash
