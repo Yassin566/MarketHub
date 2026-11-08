@@ -61,7 +61,7 @@ public class VendorAnalyticsService {
                 rs.getLong("cancelled_count"), rs.getBigDecimal("revenue")), vendorId, startAt, endAt);
 
         List<DailyMetric> daily = jdbc.query("""
-            SELECT created_at AT TIME ZONE 'UTC' AS utc_created_at, currency, COUNT(*) AS order_count,
+            SELECT (created_at AT TIME ZONE 'UTC')::date AS metric_date, currency, COUNT(*) AS order_count,
                    COALESCE(SUM(subtotal) FILTER (WHERE status IN ('PAID','PROCESSING','FULFILLED')),0) AS revenue
             FROM vendor_orders
             WHERE vendor_id=? AND created_at>=? AND created_at<?
