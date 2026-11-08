@@ -9,11 +9,12 @@ Multi-vendor marketplace foundation using a modular monolith.
 - Docker Compose, Nginx, GitHub Actions
 
 ## Current implementation
-The backend foundation includes customer registration/login, BCrypt password hashing, JWT bearer authentication, vendor application submission and admin lifecycle, approved-vendor store profile management, tenant-scoped product CRUD/archive, vendor inventory visibility and stock adjustments, customer inventory reservations with automatic expiry, persistent customer carts, checkout validation, and transactional order creation with per-vendor child orders and expiring stock reservations. See the API guides in `docs/`.
 
-Order creation snapshots product names and prices, creates the parent order and vendor orders, reserves inventory, and clears the cart in one PostgreSQL transaction. Idempotency keys make retries safe. Orders remain pending payment; no payment provider is called and no order is marked paid by a browser action.
+The backend foundation includes customer registration/login, JWT bearer authentication, vendor application and approval lifecycle, vendor store profiles, tenant-scoped product and inventory management, customer carts and reservations, transactional order creation, and durable idempotent payment-request records with a transactional outbox. See the API guides in `docs/`.
 
-This is an incremental implementation, not a claim that every marketplace capability is complete. Payment integration and verified webhooks, taxes, shipping, discounts, commission/payout accounting, refunds, refresh-token rotation, and full Angular business screens remain future work.
+Payment requests persist the order's server-calculated amount and currency. The outbox event is committed atomically with the payment attempt. No payment provider is configured yet: these records are not charges, orders remain pending payment, and fulfillment is not triggered.
+
+This is an incremental implementation, not a claim that every marketplace capability is complete. Provider integration, outbox delivery, signed webhooks, refunds, taxes, shipping, commission/payout accounting, refresh-token rotation, and full Angular business screens remain future work.
 
 ## Run locally
 ```bash
