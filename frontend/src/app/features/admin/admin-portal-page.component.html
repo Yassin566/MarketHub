@@ -1,0 +1,36 @@
+<section class="admin-page">
+  <div class="admin-heading">
+    <div><p class="eyebrow">MARKETHUB CONTROL CENTER</p><h1>Admin overview</h1><p class="subtitle">Monitor payment exceptions that need an operator's attention.</p></div>
+    <button type="button" class="refresh-button" (click)="load()" [disabled]="loading()">↻ Refresh</button>
+  </div>
+
+  <div class="admin-stats">
+    <article class="stat-card"><span>Payment review cases</span><strong>{{ total() }}</strong><small>Recorded reconciliation attempts</small></article>
+    <article class="stat-card"><span>Current page</span><strong>{{ currentPage() }} / {{ pageCount() }}</strong><small>20 records per page</small></article>
+    <article class="stat-card"><span>Operator guidance</span><strong>Verify first</strong><small>Never infer provider success from a timeout</small></article>
+  </div>
+
+  <section class="panel">
+    <div class="panel-heading"><div><h2>Payment reconciliation</h2><p>Stale processing payments flagged for manual verification.</p></div><span class="count">{{ total() }} total</span></div>
+    @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
+    @if (loading()) { <div class="state" role="status">Loading payment review history…</div> }
+    @else if (!error() && items().length === 0) { <div class="state empty"><strong>You're all caught up</strong><span>No payment reconciliation cases have been recorded.</span></div> }
+    @else if (items().length > 0) {
+      <div class="table-wrap"><table>
+        <thead><tr><th>Payment / order</th><th>Provider</th><th>Outcome</th><th>Observed status</th><th>Flagged</th><th>Details</th></tr></thead>
+        <tbody>@for (item of items(); track item.attemptId) {
+          <tr>
+            <td><strong>{{ item.paymentId.slice(0, 8) }}…</strong><small>Order {{ item.orderId.slice(0, 8) }}…</small></td>
+            <td>{{ item.providerCode }}<small>{{ item.providerReference || 'No provider reference' }}</small></td>
+            <td><span class="status-pill">{{ item.outcome }}</span></td>
+            <td>{{ item.observedPaymentStatus }}</td>
+            <td>{{ item.createdAt | date:'medium' }}</td>
+            <td class="detail-cell">{{ item.detail }}</td>
+          </tr>
+        }</tbody>
+      </table></div>
+      <div class="pagination"><span>Showing {{ offset() + 1 }}–{{ offset() + items().length }} of {{ total() }}</span><div><button type="button" (click)="previous()" [disabled]="offset() === 0 || loading()">Previous</button><button type="button" (click)="next()" [disabled]="offset() + limit >= total() || loading()">Next</button></div></div>
+    }
+  </section>
+  <p class="compliance-note">A timeout is not proof of payment failure or success. Verify the transaction with the payment provider before taking any resolution action.</p>
+</section>

@@ -11,6 +11,7 @@ export const routes:Routes=[
  {path:'login',canActivate:[guestGuard],data:{mode:'login'},loadComponent:()=>import('./features/auth/auth-page.component').then(m=>m.AuthPageComponent)},
  {path:'register',canActivate:[guestGuard],data:{mode:'register'},loadComponent:()=>import('./features/auth/auth-page.component').then(m=>m.AuthPageComponent)},
  {path:'vendor',canActivate:[authGuard,roleGuard(['VENDOR'])],loadComponent:()=>import('./features/vendor/vendor-portal-page.component').then(m=>m.VendorPortalPageComponent)},
+ {path:'admin',canActivate:[authGuard,roleGuard(['ADMIN','SUPER_ADMIN'])],loadComponent:()=>import('./features/admin/admin-portal-page.component').then(m=>m.AdminPortalPageComponent)},
  {path:'account',redirectTo:'orders'},
  {path:'**',redirectTo:''}
 ];
