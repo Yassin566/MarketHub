@@ -49,3 +49,17 @@ test('anonymous visitors retain the requested customer destination', async ({ pa
   await page.goto('/orders/order-123');
   await expect(page).toHaveURL(/\/login\?returnUrl=%2Forders%2Forder-123$/);
 });
+
+for (const session of sessions) {
+  test(`${session.role} sessions retain access to the public catalogue`, async ({ page }) => {
+    await page.addInitScript((role) => {
+      sessionStorage.setItem('markethub.access-token', 'e2e-public-route-token');
+      sessionStorage.setItem('markethub.session-user', JSON.stringify({
+        userId: 'e2e-user', email: 'role@example.test', role,
+      }));
+    }, session.role);
+
+    await page.goto('/products');
+    await expect(page.locator('.catalog-shell')).toBeVisible();
+  });
+}
