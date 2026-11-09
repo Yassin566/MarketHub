@@ -21,3 +21,7 @@ The CI workflow runs the same command against a PostgreSQL 17 service container.
 The GitHub Actions workflow supplies a disposable test database and test-only JWT settings. Never use these CI credentials outside automated tests. Local development should use a dedicated local database and environment-specific secrets.
 
 The backend CI workflow is triggered for pull requests targeting `main`, pushes to `main`, and manual workflow dispatch.
+
+## PostgreSQL integration-test troubleshooting
+
+If verification fails during database initialization, confirm that PostgreSQL 17 is reachable and that the test database/user/password match the CI service definition. Flyway migration and application integration-test failures should be fixed at their source; do not skip migrations or disable integration tests to obtain a green build.
