@@ -9,6 +9,8 @@ export class OrderDetailPageComponent {
   private readonly route=inject(ActivatedRoute);
   readonly order=signal<Order|null>(null);
   readonly fulfilments=signal<Fulfilment[]>([]);
+  readonly fulfilmentsLoading=signal(false);
+  readonly fulfilmentsError=signal('');
   readonly loading=signal(true);
   readonly error=signal('');
   readonly paymentStatus=signal(this.route.snapshot.queryParamMap.get('payment')??'');
@@ -18,8 +20,18 @@ export class OrderDetailPageComponent {
   constructor(){
     const id=this.route.snapshot.paramMap.get('id')??'';
     this.api.order(id).subscribe({
-      next:r=>{this.order.set(r.data);this.loading.set(false);this.api.fulfilments(id).subscribe({next:f=>this.fulfilments.set(f.data),error:()=>this.fulfilments.set([])});},
+      next:r=>{this.order.set(r.data);this.loading.set(false);this.loadFulfilments(id);},
       error:()=>{this.error.set('Order not found or you do not have access to it.');this.loading.set(false);}
+    });
+  }
+
+  loadFulfilments(orderId=this.order()?.id??''):void {
+    if(!orderId)return;
+    this.fulfilmentsLoading.set(true);
+    this.fulfilmentsError.set('');
+    this.api.fulfilments(orderId).subscribe({
+      next:response=>{this.fulfilments.set(response.data);this.fulfilmentsLoading.set(false);},
+      error:()=>{this.fulfilmentsLoading.set(false);this.fulfilmentsError.set('Shipment details could not be loaded. Try again.');}
     });
   }
 

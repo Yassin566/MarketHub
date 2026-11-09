@@ -29,3 +29,32 @@ test.describe('customer account dashboard and order history',()=>{
   await expect(page.getByRole('button',{name:'Next'})).toBeEnabled();
  });
 });
+
+test('shows vendor shipment progress, dispatch time and a safe carrier tracking link',async({page})=>{
+ await page.route('**/api/v1/customer/orders/order-abc123',route=>route.fulfill({json:envelope(order)}));
+ await page.route('**/api/v1/customer/orders/order-abc123/fulfilments',route=>route.fulfill({json:envelope([{
+  vendorOrderId:'vendor-order-1',vendorName:'Northstar Goods',status:'FULFILLED',
+  shipment:{id:'shipment-1',carrier:'Example Express',trackingNumber:'ZX123456',trackingUrl:'https://carrier.example/track/ZX123456',shippedAt:'2026-11-09T09:30:00Z',estimatedDeliveryDate:'2026-11-12'}
+ }])}));
+ await page.goto('/orders/order-abc123');
+ await expect(page.getByRole('heading',{name:'Fulfilment & tracking'})).toBeVisible();
+ await expect(page.getByText('Northstar Goods')).toBeVisible();
+ await expect(page.getByText('ZX123456')).toBeVisible();
+ await expect(page.getByText(/Dispatched/)).toBeVisible();
+ const tracking=page.getByRole('link',{name:'Track with Example Express ↗'});
+ await expect(tracking).toHaveAttribute('href','https://carrier.example/track/ZX123456');
+ await expect(tracking).toHaveAttribute('rel','noopener noreferrer');
+});
+test('shows a retry action when fulfilment tracking cannot be loaded',async({page})=>{
+ let reads=0;
+ await page.route('**/api/v1/customer/orders/order-abc123',route=>route.fulfill({json:envelope(order)}));
+ await page.route('**/api/v1/customer/orders/order-abc123/fulfilments',async route=>{
+  reads++;
+  if(reads===1)await route.fulfill({status:503,json:{success:false,data:null,error:{message:'Unavailable'}}});
+  else await route.fulfill({json:envelope([])});
+ });
+ await page.goto('/orders/order-abc123');
+ await expect(page.getByRole('alert')).toContainText('Shipment details could not be loaded');
+ await page.getByRole('button',{name:'Try again'}).click();
+ await expect(page.getByText(/No fulfilment details are available yet/)).toBeVisible();
+});
