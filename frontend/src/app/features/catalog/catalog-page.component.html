@@ -20,7 +20,12 @@
             <a class="product-card" [routerLink]="['/products', product.slug]">
               <div class="product-art"><span>m.</span><small>MARKETHUB FIND</small></div>
               <div class="product-card-body"><span class="product-vendor">INDEPENDENT STORE</span>
-                <h2>{{ product.name }}</h2><div class="product-price">{{ product.price | currency:product.currency:'symbol':'1.2-2' }}</div>
+                <h2>{{ product.name }}</h2>
+                <div class="product-rating" [attr.aria-label]="product.reviewCount ? (product.averageRating | number:'1.1-1') + ' out of 5 from ' + product.reviewCount + ' reviews' : 'No reviews yet'">
+                  @if (product.reviewCount > 0) { <span class="product-rating-stars" aria-hidden="true">★</span><strong>{{ product.averageRating | number:'1.1-1' }}</strong><span>{{ product.reviewCount }} {{ product.reviewCount === 1 ? 'review' : 'reviews' }}</span> }
+                  @else { <span class="product-rating-empty">No reviews yet</span> }
+                </div>
+                <div class="product-price">{{ product.price | currency:product.currency:'symbol':'1.2-2' }}</div>
                 <span class="product-view">View product <b>↗</b></span></div>
             </a>
           }

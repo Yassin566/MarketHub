@@ -11,6 +11,8 @@ export interface Product {
   price: number;
   currency: string;
   createdAt: string;
+  averageRating: number | null;
+  reviewCount: number;
 }
 export interface ProductPage {
   content: Product[];

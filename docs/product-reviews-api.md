@@ -25,3 +25,11 @@ A review can be created only if the authenticated customer owns an order contain
 - The authenticated review lookup scopes the query to both product ID and customer ID; it never exposes another customer's review.
 
 The migration retains the purchase order reference and indexes the public product feed and customer history.
+
+
+## Catalogue rating summaries
+
+The public catalogue and product-detail responses include `averageRating` and `reviewCount`.
+These values are computed from published reviews only. Products with no published reviews
+return `averageRating: null` and `reviewCount: 0`. Catalogue pages load all summaries
+for the current page in one grouped aggregate query, rather than issuing a query per product.

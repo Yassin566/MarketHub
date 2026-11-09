@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 @Service
@@ -53,6 +55,27 @@ public class ProductReviewService {
                 stats.averageRating(), stats.reviewCount());
     }
 
+
+
+    public record ReviewSummary(BigDecimal averageRating, long reviewCount) {}
+
+    @Transactional(readOnly = true)
+    public Map<UUID, ReviewSummary> summariesFor(List<UUID> productIds) {
+        if (productIds == null || productIds.isEmpty()) return Map.of();
+        String placeholders = String.join(",", java.util.Collections.nCopies(productIds.size(), "?"));
+        String sql = """
+                SELECT product_id, AVG(rating)::numeric AS average_rating, COUNT(*) AS review_count
+                FROM product_reviews
+                WHERE is_published = TRUE AND product_id IN (%s)
+                GROUP BY product_id
+                """.formatted(placeholders);
+        Map<UUID, ReviewSummary> summaries = new HashMap<>();
+        jdbc.query(sql, rs -> {
+            summaries.put(rs.getObject("product_id", UUID.class),
+                    new ReviewSummary(rs.getBigDecimal("average_rating"), rs.getLong("review_count")));
+        }, productIds.toArray());
+        return Map.copyOf(summaries);
+    }
 
     @Transactional(readOnly = true)
     public Review findOwned(UUID customerId, UUID productId) {

@@ -1,12 +1,12 @@
 import {Component, inject, signal} from '@angular/core';
-import {CurrencyPipe} from '@angular/common';
+import {CurrencyPipe, DecimalPipe} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {RouterLink} from '@angular/router';
 import {CatalogService, Product} from '../../core/catalog/catalog.service';
 
 @Component({
   standalone: true,
-  imports: [CurrencyPipe, FormsModule, RouterLink],
+  imports: [CurrencyPipe, DecimalPipe, FormsModule, RouterLink],
   templateUrl: './catalog-page.component.html'
 })
 export class CatalogPageComponent {
