@@ -181,7 +181,7 @@ Acceptance:
 
 ### Phase 8 — Shared design system and responsive polish
 
-**Status:** In progress — shared interaction tokens, keyboard focus, reduced-motion support, mobile navigation, and role-specific customer/vendor/admin layouts are being consolidated. PR #50 covers the shared foundation; the follow-up responsive screen pass is tracked in PR #51.
+**Status:** In progress — shared interaction tokens, keyboard focus, reduced-motion support, mobile navigation, role-specific customer/vendor/admin layouts, and the remaining discovery/authentication/purchase journey are being consolidated. PR #50 covers the shared foundation; PR #51 covers customer/vendor/admin screens; the storefront and checkout follow-up is tracked in PR #52.
 
 **Goal:** Make the entire product feel like one cohesive application.
 
