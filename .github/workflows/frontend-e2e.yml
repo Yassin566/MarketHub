@@ -28,12 +28,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Pin npm to a stable release
+        run: npm install --global npm@10.9.2
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm install
+        run: npm install --no-audit --no-fund
       - name: Install browser test dependencies
         working-directory: frontend/e2e
-        run: npm install
+        run: npm install --no-audit --no-fund
       - name: Install Chromium
         working-directory: frontend/e2e
         run: npx playwright install --with-deps chromium
