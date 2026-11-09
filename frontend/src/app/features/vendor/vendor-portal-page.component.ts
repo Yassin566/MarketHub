@@ -254,6 +254,7 @@ export class VendorPortalPageComponent {
   }
 
   loadOrders(offset = this.orderOffset(), complete?: () => void): void {
+    this.orderOffset.set(offset);
     this.ordersLoading.set(true);
     this.ordersError.set('');
     const status = this.orderStatusFilter();

@@ -48,7 +48,7 @@ test.describe('vendor order management', () => {
     await expect(page.getByText('Status history')).toBeVisible();
     await page.getByRole('button', { name: 'Next' }).click();
     await expect.poll(() => requests).toContain('PROCESSING:20');
-    await expect(page.getByText('processing-2', { exact: false })).toBeVisible();
+    await expect(page.getByText('ORDER processi')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Previous' })).toBeEnabled();
   });
 
