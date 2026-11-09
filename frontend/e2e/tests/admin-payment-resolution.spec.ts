@@ -94,6 +94,9 @@ test('admin resolution form validates evidence before showing confirmation', asy
   await page.route('**/api/v1/admin/payments/reconciliation**', route =>
     route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) })
   );
+  await page.route('**/api/v1/admin/reviews**', route =>
+    route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 100, offset: 0 }) })
+  );
   await page.route('**/api/v1/admin/payments**', async route => {
     if (new URL(route.request().url()).pathname.endsWith('/reconciliation')) {
       await route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) });
