@@ -54,13 +54,12 @@ test.describe('customer purchase lifecycle', () => {
     let paymentKey = '';
     let paymentAttempts = 0;
 
-    await page.route('**/api/v1/customer/cart', async route => {
-      if (route.request().method() === 'PUT') {
-        cartUpdateBody = route.request().postDataJSON() as Record<string, unknown>;
-        quantity = Number(cartUpdateBody.quantity);
-        await route.fulfill({ json: envelope(cart(quantity)) });
-        return;
-      }
+    await page.route('**/api/v1/customer/cart', route =>
+      route.fulfill({ json: envelope(cart(quantity)) }));
+
+    await page.route('**/api/v1/customer/cart/items', async route => {
+      cartUpdateBody = route.request().postDataJSON() as Record<string, unknown>;
+      quantity = Number(cartUpdateBody.quantity);
       await route.fulfill({ json: envelope(cart(quantity)) });
     });
 
