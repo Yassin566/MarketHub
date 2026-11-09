@@ -10,11 +10,13 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class VendorOrderService {
     private static final int MAX_PAGE_SIZE = 100;
+    private static final Set<String> ORDER_STATUSES = Set.of("PAID", "PROCESSING", "FULFILLED", "CANCELLED");
     private final JdbcTemplate jdbc;
     private final ApprovedVendorAccess access;
     public VendorOrderService(JdbcTemplate jdbc, ApprovedVendorAccess access) { this.jdbc = jdbc; this.access = access; }
@@ -27,12 +29,19 @@ public class VendorOrderService {
     private record CurrentOrder(String status) {}
 
     @Transactional(readOnly = true)
-    public OrderPage list(UUID userId, int limit, int offset) {
+    public OrderPage list(UUID userId, int limit, int offset) { return list(userId, limit, offset, null); }
+
+    public OrderPage list(UUID userId, int limit, int offset, String requestedStatus) {
         if (limit < 1 || limit > MAX_PAGE_SIZE) throw new IllegalArgumentException("limit must be between 1 and " + MAX_PAGE_SIZE);
         if (offset < 0) throw new IllegalArgumentException("offset must not be negative");
+        String status = requestedStatus == null || requestedStatus.isBlank() ? null : requestedStatus.trim().toUpperCase();
+        if (status != null && !ORDER_STATUSES.contains(status)) throw new IllegalArgumentException("Unsupported vendor order status filter");
         UUID vendorId = access.requireApprovedVendor(userId);
-        List<UUID> ids = jdbc.query("SELECT id FROM vendor_orders WHERE vendor_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
-                (rs,row)->rs.getObject("id",UUID.class),vendorId,limit+1,offset);
+        List<UUID> ids = status == null
+                ? jdbc.query("SELECT id FROM vendor_orders WHERE vendor_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
+                    (rs,row)->rs.getObject("id",UUID.class),vendorId,limit+1,offset)
+                : jdbc.query("SELECT id FROM vendor_orders WHERE vendor_id=? AND status=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?",
+                    (rs,row)->rs.getObject("id",UUID.class),vendorId,status,limit+1,offset);
         boolean more=ids.size()>limit;
         return new OrderPage(ids.stream().limit(limit).map(id->load(vendorId,id)).toList(),limit,offset,more);
     }

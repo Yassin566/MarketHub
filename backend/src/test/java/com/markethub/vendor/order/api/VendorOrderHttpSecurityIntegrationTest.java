@@ -62,6 +62,21 @@ class VendorOrderHttpSecurityIntegrationTest {
     }
 
     @Test
+    void statusFilterReturnsOnlyMatchingOrdersWithinVendorScope() throws Exception {
+        UUID processingOrder = createOrder(jdbc.queryForObject(
+                "select id from vendors where owner_user_id=?", UUID.class, vendorAUser), "PROCESSING");
+        mockMvc.perform(get("/api/v1/vendor/orders").queryParam("status", "PROCESSING")
+                        .header("Authorization", "Bearer " + vendorAToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.orders.length()").value(1))
+                .andExpect(jsonPath("$.data.orders[0].id").value(processingOrder.toString()))
+                .andExpect(jsonPath("$.data.orders[0].status").value("PROCESSING"));
+        mockMvc.perform(get("/api/v1/vendor/orders").queryParam("status", "UNKNOWN")
+                        .header("Authorization", "Bearer " + vendorAToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void vendorCanAdvancePaidOrderAndTransitionIsAudited() throws Exception {
         mockMvc.perform(patch("/api/v1/vendor/orders/{id}/status", vendorAOrder)
                         .header("Authorization", "Bearer " + vendorAToken)

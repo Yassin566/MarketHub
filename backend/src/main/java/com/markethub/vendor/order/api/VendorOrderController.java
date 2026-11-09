@@ -14,8 +14,9 @@ public class VendorOrderController {
     private final VendorOrderService service;
     public VendorOrderController(VendorOrderService service) { this.service=service; }
     @GetMapping public ApiResponse<VendorOrderService.OrderPage> list(@AuthenticationPrincipal MarketHubPrincipal principal,
-        @RequestParam(defaultValue="20") int limit,@RequestParam(defaultValue="0") int offset) {
-        return ApiResponse.ok(service.list(principal.userId(),limit,offset));
+        @RequestParam(defaultValue="20") int limit,@RequestParam(defaultValue="0") int offset,
+        @RequestParam(required=false) String status) {
+        return ApiResponse.ok(service.list(principal.userId(),limit,offset,status));
     }
     @GetMapping("/{vendorOrderId}") public ApiResponse<VendorOrderService.OrderView> get(
         @AuthenticationPrincipal MarketHubPrincipal principal,@PathVariable UUID vendorOrderId) {
