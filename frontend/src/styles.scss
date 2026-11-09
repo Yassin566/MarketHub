@@ -173,3 +173,25 @@
 .vendor-order-pagination{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:20px 0;color:var(--muted);font-size:12px}
 .vendor-order-pagination>div{display:flex;gap:8px}.vendor-order-pagination .secondary-button{padding:10px 14px;font-size:12px}
 @media(max-width:520px){.vendor-order-tools{align-items:stretch;flex-direction:column}.vendor-order-tools select{width:100%}.vendor-order-pagination{align-items:stretch;flex-direction:column}.vendor-order-pagination>div{justify-content:space-between}.vendor-order-history>div{align-items:flex-start;flex-direction:column}}
+
+
+/* Shipment tracking and fulfilment details */
+.fulfilment-card{padding:26px}
+.fulfilment-heading{display:flex;justify-content:space-between;align-items:start;margin-bottom:12px}
+.fulfilment-heading h2{margin:8px 0 5px}
+.fulfilment-heading>div>p{margin:0}
+.fulfilment-row{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(0,1.5fr);gap:24px;padding:22px 0;border-top:1px solid var(--line)}
+.fulfilment-vendor{display:flex;flex-direction:column;align-items:start;gap:10px}
+.fulfilment-vendor>b{font:700 15px Manrope}
+.fulfilment-shipment{display:flex;flex-direction:column;align-items:start;gap:12px}
+.fulfilment-tracking{display:grid;grid-template-columns:1fr;gap:5px}
+.fulfilment-tracking .eyebrow{margin-top:5px}
+.fulfilment-tracking strong{font-size:14px}
+.fulfilment-dates{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:12px}
+.fulfilment-track-link{padding:10px 14px;font-size:12px}
+.fulfilment-pending{margin:0}
+.vendor-shipment>div{display:flex;flex-direction:column;align-items:start;gap:7px;min-width:220px}
+.vendor-shipment .eyebrow{font-size:8px}
+.vendor-shipment .secondary-button{padding:10px 13px;font-size:11px}
+.dispatch-panel .fine-print{margin:-7px 0 0}
+@media(max-width:650px){.fulfilment-row{grid-template-columns:1fr;gap:12px}.fulfilment-card{padding:19px}.vendor-shipment{align-items:flex-start;flex-direction:column}.vendor-shipment>div{min-width:0}}

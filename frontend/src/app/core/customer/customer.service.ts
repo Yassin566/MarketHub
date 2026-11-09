@@ -9,7 +9,7 @@ export interface CheckoutValidation{cartId:string;valid:boolean;lines:CheckoutLi
 export interface OrderLine{productId:string;vendorId:string;productName:string;quantity:number;unitPrice:number;currency:string;lineTotal:number}
 export interface Order{id:string;status:string;currency:string;subtotal:number;total:number;expiresAt:string|null;createdAt:string;items:OrderLine[]}
 export interface OrderPage{orders:Order[];limit:number;offset:number;hasMore:boolean}
-export interface Shipment{id:string;carrier:string;trackingNumber:string;trackingUrl:string;shippedAt:string;estimatedDeliveryDate:string|null}
+export interface Shipment{id:string;carrier:string;trackingNumber:string;trackingUrl:string|null;shippedAt:string;estimatedDeliveryDate:string|null}
 export interface Fulfilment{vendorOrderId:string;vendorName:string;status:string;shipment:Shipment|null}
 export interface Payment{id:string;orderId:string;status:string;providerCode:string;amount:number;currency:string;createdAt:string}
 export interface CustomerNotification{id:string;orderId:string|null;type:string;title:string;message:string;createdAt:string;readAt:string|null}

@@ -57,6 +57,7 @@ export class VendorPortalPageComponent {
   trackingNumber = '';
   trackingUrl = '';
   estimatedDeliveryDate = '';
+  readonly dispatchError = signal('');
 
   constructor() { this.load(); }
 
@@ -296,16 +297,28 @@ export class VendorPortalPageComponent {
     this.trackingNumber = '';
     this.trackingUrl = '';
     this.estimatedDeliveryDate = '';
+    this.dispatchError.set('');
   }
 
   dispatch(): void {
     const target = this.dispatchTarget();
-    if (!target) return;
+    if (!target || this.busy()) return;
+    const trackingUrl = this.trackingUrl.trim();
+    if (trackingUrl) {
+      try {
+        const parsed = new URL(trackingUrl);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') throw new Error('Unsupported protocol');
+      } catch {
+        this.dispatchError.set('Enter a valid HTTP or HTTPS tracking URL, or leave the field empty.');
+        return;
+      }
+    }
+    this.dispatchError.set('');
     this.busy.set(true);
     this.api.dispatchOrder(target.id, {
       carrier: this.carrier.trim(),
       trackingNumber: this.trackingNumber.trim(),
-      trackingUrl: this.trackingUrl.trim() || null,
+      trackingUrl: trackingUrl || null,
       estimatedDeliveryDate: this.estimatedDeliveryDate || null
     }).subscribe({
       next: () => {

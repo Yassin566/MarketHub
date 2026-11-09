@@ -15,8 +15,23 @@
   }@else{
     <div class="order-detail-card"><h2>Payment</h2><p class="muted">Order status: {{o.status}}. Payment outcomes are confirmed by the server after verified provider events, not by a browser redirect.</p></div>
   }
-  <div class="order-detail-card"><h2>Fulfilment & tracking</h2>
-    @if(!fulfilments().length){<p class="muted">No shipment information is available yet. Tracking appears after a vendor dispatches your order.</p>}
-    @for(f of fulfilments();track f.vendorOrderId){<div class="fulfilment-row"><div><b>{{f.vendorName}}</b><p>{{f.status}}</p></div>@if(f.shipment;as s){<div><p>{{s.carrier}} · {{s.trackingNumber}}</p>@if(s.estimatedDeliveryDate){<p>Estimated delivery: {{s.estimatedDeliveryDate|date:'mediumDate'}}</p>}@if(s.trackingUrl){<a class="text-button" [href]="s.trackingUrl" target="_blank" rel="noopener noreferrer">Track shipment ↗</a>}</div>}@else{<span class="muted">Not dispatched</span>}</div>}
+  <div class="order-detail-card fulfilment-card">
+    <div class="fulfilment-heading"><div><span class="eyebrow">DELIVERY PROGRESS</span><h2>Fulfilment & tracking</h2><p class="muted">Each vendor shipment is tracked separately for this order.</p></div></div>
+    @if(fulfilmentsLoading()){<p class="muted" role="status">Loading shipment details...</p>}
+    @else if(fulfilmentsError()){<p class="error-banner" role="alert">{{fulfilmentsError()}} <button class="text-button" type="button" (click)="loadFulfilments()">Try again</button></p>}
+    @else if(!fulfilments().length){<p class="muted">No fulfilment details are available yet. Shipment tracking appears after a vendor dispatches your order.</p>}
+    @for(f of fulfilments();track f.vendorOrderId){
+      <article class="fulfilment-row">
+        <div class="fulfilment-vendor"><b>{{f.vendorName}}</b><span class="status-pill">{{f.status}}</span></div>
+        @if(f.shipment;as s){
+          <div class="fulfilment-shipment">
+            <div class="fulfilment-tracking"><span class="eyebrow">CARRIER</span><strong>{{s.carrier}}</strong><span class="eyebrow">TRACKING NUMBER</span><strong>{{s.trackingNumber}}</strong></div>
+            <div class="fulfilment-dates"><span>Dispatched {{s.shippedAt|date:'medium'}}</span>@if(s.estimatedDeliveryDate){<span>Estimated delivery {{s.estimatedDeliveryDate|date:'fullDate'}}</span>}</div>
+            @if(s.trackingUrl){<a class="primary-button fulfilment-track-link" [href]="s.trackingUrl" target="_blank" rel="noopener noreferrer">Track with {{s.carrier}} ↗</a>}
+            @else{<p class="fine-print">Your vendor has not provided an external tracking link. Use the carrier and tracking number above on the carrier's website.</p>}
+          </div>
+        }@else{<p class="muted fulfilment-pending">Awaiting dispatch. Tracking details will appear here when this vendor ships your items.</p>}
+      </article>
+    }
   </div>
 }</section>
