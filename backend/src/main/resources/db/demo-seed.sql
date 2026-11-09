@@ -4,7 +4,7 @@
 --
 -- All records use deterministic demo IDs and ON CONFLICT DO NOTHING so this file
 -- can be re-run. It does not truncate or delete application data.
--- DEMO ONLY: all accounts share the documented test password "password".
+-- DEMO ONLY: all accounts share the test password "MarketHubDemo2026!".
 -- Replace password hashes and revoke demo credentials before any shared/staging use.
 -- These records are fictional. Provider references, carrier URLs and tokens are inert.
 
@@ -12,16 +12,16 @@ BEGIN;
 
 -- 1. Identity and access
 INSERT INTO app_users (id,email,password_hash,role,status,created_at,updated_at) VALUES
-('10000000-0000-4000-8000-000000000001','admin@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','ADMIN','ACTIVE','2026-01-02T09:00:00Z','2026-01-02T09:00:00Z'),
-('10000000-0000-4000-8000-000000000002','superadmin@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','SUPER_ADMIN','ACTIVE','2026-01-02T09:05:00Z','2026-01-02T09:05:00Z'),
-('10000000-0000-4000-8000-000000000003','vendor.one@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','VENDOR','ACTIVE','2026-01-03T10:00:00Z','2026-01-03T10:00:00Z'),
-('10000000-0000-4000-8000-000000000004','vendor.two@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','VENDOR','ACTIVE','2026-01-03T10:10:00Z','2026-01-03T10:10:00Z'),
-('10000000-0000-4000-8000-000000000005','vendor.pending@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','VENDOR','ACTIVE','2026-01-04T11:00:00Z','2026-01-04T11:00:00Z'),
-('10000000-0000-4000-8000-000000000006','customer.one@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','CUSTOMER','ACTIVE','2026-01-05T08:00:00Z','2026-01-05T08:00:00Z'),
-('10000000-0000-4000-8000-000000000007','customer.two@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','CUSTOMER','ACTIVE','2026-01-05T08:10:00Z','2026-01-05T08:10:00Z'),
-('10000000-0000-4000-8000-000000000008','customer.three@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','CUSTOMER','ACTIVE','2026-01-05T08:20:00Z','2026-01-05T08:20:00Z'),
-('10000000-0000-4000-8000-000000000009','vendor.suspended@demo.markethub.test','$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy','VENDOR','LOCKED','2026-01-06T12:00:00Z','2026-03-01T12:00:00Z')
-ON CONFLICT DO NOTHING;
+('10000000-0000-4000-8000-000000000001','admin@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','ADMIN','ACTIVE','2026-01-02T09:00:00Z','2026-01-02T09:00:00Z'),
+('10000000-0000-4000-8000-000000000002','superadmin@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','SUPER_ADMIN','ACTIVE','2026-01-02T09:05:00Z','2026-01-02T09:05:00Z'),
+('10000000-0000-4000-8000-000000000003','vendor.one@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','VENDOR','ACTIVE','2026-01-03T10:00:00Z','2026-01-03T10:00:00Z'),
+('10000000-0000-4000-8000-000000000004','vendor.two@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','VENDOR','ACTIVE','2026-01-03T10:10:00Z','2026-01-03T10:10:00Z'),
+('10000000-0000-4000-8000-000000000005','vendor.pending@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','VENDOR','ACTIVE','2026-01-04T11:00:00Z','2026-01-04T11:00:00Z'),
+('10000000-0000-4000-8000-000000000006','customer.one@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','CUSTOMER','ACTIVE','2026-01-05T08:00:00Z','2026-01-05T08:00:00Z'),
+('10000000-0000-4000-8000-000000000007','customer.two@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','CUSTOMER','ACTIVE','2026-01-05T08:10:00Z','2026-01-05T08:10:00Z'),
+('10000000-0000-4000-8000-000000000008','customer.three@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','CUSTOMER','ACTIVE','2026-01-05T08:20:00Z','2026-01-05T08:20:00Z'),
+('10000000-0000-4000-8000-000000000009','vendor.suspended@demo.markethub.test','$2y$10$oA1voGsHQrpKajocZibhVuxJMPaniMH5uDov22Y3INsded/V/SyzK','VENDOR','LOCKED','2026-01-06T12:00:00Z','2026-03-01T12:00:00Z')
+ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash;
 
 INSERT INTO refresh_tokens (id,user_id,token_hash,family_id,expires_at,revoked_at,created_at) VALUES
 ('11000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000006','demo-refresh-hash-customer-one','11000000-0000-4000-8000-000000000101','2027-01-01T00:00:00Z',NULL,'2026-11-01T10:00:00Z'),
