@@ -43,7 +43,7 @@ test.describe('vendor order management', () => {
     await page.getByRole('button', { name: /Orders/ }).click();
     await expect(page.getByText('Desk Lamp').first()).toBeVisible();
     await page.getByLabel('Order status').selectOption('PROCESSING');
-    await expect(page.getByText('PROCESSING', { exact: true })).toBeVisible();
+    await expect(page.locator('.vendor-order-card .status-pill')).toHaveText('PROCESSING');
     await expect(page.locator('.vendor-order-card .status-pill')).toHaveText('PROCESSING');
     await expect(page.getByText('Status history')).toBeVisible();
     await page.getByRole('button', { name: 'Next' }).click();
