@@ -1,4 +1,4 @@
-import {inject,Injectable} from '@angular/core';
+import {inject,Injectable,signal} from '@angular/core';
 import {HttpClient,HttpHeaders,HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {ApiResponse} from '../api/api.models';
@@ -12,9 +12,15 @@ export interface OrderPage{orders:Order[];limit:number;offset:number;hasMore:boo
 export interface Shipment{id:string;carrier:string;trackingNumber:string;trackingUrl:string;shippedAt:string;estimatedDeliveryDate:string|null}
 export interface Fulfilment{vendorOrderId:string;vendorName:string;status:string;shipment:Shipment|null}
 export interface Payment{id:string;orderId:string;status:string;providerCode:string;amount:number;currency:string;createdAt:string}
+export interface CustomerNotification{id:string;orderId:string|null;type:string;title:string;message:string;createdAt:string;readAt:string|null}
+export interface NotificationPage{notifications:CustomerNotification[];limit:number;offset:number;hasMore:boolean;unreadCount:number}
 @Injectable({providedIn:'root'})
 export class CustomerService{
  private http=inject(HttpClient);
+ readonly unreadCount=signal(0);
+ notifications(limit=20,offset=0,unreadOnly=false):Observable<ApiResponse<NotificationPage>>{const params=new HttpParams().set('limit',limit).set('offset',offset).set('unreadOnly',unreadOnly);return this.http.get<ApiResponse<NotificationPage>>('/api/v1/customer/notifications',{params});}
+ markNotificationRead(id:string):Observable<ApiResponse<CustomerNotification>>{return this.http.patch<ApiResponse<CustomerNotification>>('/api/v1/customer/notifications/'+encodeURIComponent(id)+'/read',{});}
+ markAllNotificationsRead():Observable<ApiResponse<number>>{return this.http.patch<ApiResponse<number>>('/api/v1/customer/notifications/read-all',{});}
  cart():Observable<ApiResponse<Cart>>{return this.http.get<ApiResponse<Cart>>('/api/v1/customer/cart');}
  putItem(productId:string,quantity:number):Observable<ApiResponse<Cart>>{return this.http.put<ApiResponse<Cart>>('/api/v1/customer/cart/items',{productId,quantity});}
  removeItem(productId:string):Observable<ApiResponse<Cart>>{return this.http.delete<ApiResponse<Cart>>('/api/v1/customer/cart/items/'+encodeURIComponent(productId));}
