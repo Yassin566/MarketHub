@@ -14,10 +14,16 @@ export interface Fulfilment{vendorOrderId:string;vendorName:string;status:string
 export interface Payment{id:string;orderId:string;status:string;providerCode:string;amount:number;currency:string;createdAt:string}
 export interface CustomerNotification{id:string;orderId:string|null;type:string;title:string;message:string;createdAt:string;readAt:string|null}
 export interface NotificationPage{notifications:CustomerNotification[];limit:number;offset:number;hasMore:boolean;unreadCount:number}
+export interface ProductReview{id:string;productId:string;rating:number;reviewText:string|null;createdAt:string;updatedAt:string}
+export interface ProductReviewPage{reviews:ProductReview[];limit:number;offset:number;hasMore:boolean;averageRating:number|null;reviewCount:number}
 @Injectable({providedIn:'root'})
 export class CustomerService{
  private http=inject(HttpClient);
  readonly unreadCount=signal(0);
+ productReviews(productId:string,limit=10,offset=0):Observable<ApiResponse<ProductReviewPage>>{const params=new HttpParams().set('limit',limit).set('offset',offset);return this.http.get<ApiResponse<ProductReviewPage>>('/api/v1/products/'+encodeURIComponent(productId)+'/reviews',{params});}
+ createProductReview(productId:string,rating:number,reviewText:string):Observable<ApiResponse<ProductReview>>{return this.http.post<ApiResponse<ProductReview>>('/api/v1/customer/products/'+encodeURIComponent(productId)+'/reviews',{rating,reviewText});}
+ updateProductReview(reviewId:string,rating:number,reviewText:string):Observable<ApiResponse<ProductReview>>{return this.http.put<ApiResponse<ProductReview>>('/api/v1/customer/reviews/'+encodeURIComponent(reviewId),{rating,reviewText});}
+ deleteProductReview(reviewId:string):Observable<ApiResponse<void>>{return this.http.delete<ApiResponse<void>>('/api/v1/customer/reviews/'+encodeURIComponent(reviewId));}
  notifications(limit=20,offset=0,unreadOnly=false):Observable<ApiResponse<NotificationPage>>{const params=new HttpParams().set('limit',limit).set('offset',offset).set('unreadOnly',unreadOnly);return this.http.get<ApiResponse<NotificationPage>>('/api/v1/customer/notifications',{params});}
  markNotificationRead(id:string):Observable<ApiResponse<CustomerNotification>>{return this.http.patch<ApiResponse<CustomerNotification>>('/api/v1/customer/notifications/'+encodeURIComponent(id)+'/read',{});}
  markAllNotificationsRead():Observable<ApiResponse<number>>{return this.http.patch<ApiResponse<number>>('/api/v1/customer/notifications/read-all',{});}
