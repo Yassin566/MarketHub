@@ -181,6 +181,8 @@ Acceptance:
 
 ### Phase 8 — Shared design system and responsive polish
 
+**Status:** In progress — shared global interaction tokens, keyboard focus, reduced-motion support, and mobile navigation responsiveness are being consolidated.
+
 **Goal:** Make the entire product feel like one cohesive application.
 
 Frontend work:
