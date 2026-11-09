@@ -27,6 +27,7 @@ test.describe('authentication and session experience',()=>{
  test('supports password visibility and reports authentication failures accessibly',async({page})=>{
   await page.route('**/api/v1/auth/login',route=>route.fulfill({status:401,json:{success:false,data:null,error:{message:'Invalid credentials'}}}));
   await page.goto('/login');
+  await page.getByLabel('Email address').fill('buyer@example.test');
   const password=page.getByRole('textbox',{name:'Password'});
   await password.fill('password123456');
   await page.getByRole('button',{name:'Show password'}).click();
