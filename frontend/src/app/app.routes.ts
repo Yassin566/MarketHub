@@ -13,6 +13,6 @@ export const routes:Routes=[
  {path:'register',canActivate:[guestGuard],data:{mode:'register'},loadComponent:()=>import('./features/auth/auth-page.component').then(m=>m.AuthPageComponent)},
  {path:'vendor',canActivate:[authGuard,roleGuard(['VENDOR'])],loadComponent:()=>import('./features/vendor/vendor-portal-page.component').then(m=>m.VendorPortalPageComponent)},
  {path:'admin',canActivate:[authGuard,roleGuard(['ADMIN','SUPER_ADMIN'])],loadComponent:()=>import('./features/admin/admin-portal-page.component').then(m=>m.AdminPortalPageComponent)},
- {path:'account',redirectTo:'orders'},
+ {path:'account',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/account-dashboard-page.component').then(m=>m.AccountDashboardPageComponent)},
  {path:'**',redirectTo:''}
 ];
