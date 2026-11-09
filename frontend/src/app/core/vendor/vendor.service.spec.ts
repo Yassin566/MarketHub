@@ -98,6 +98,13 @@ describe('VendorService', () => {
     request.flush(response({ orders: [], limit: 10, offset: 20, hasMore: false }));
   });
 
+  it('sends a status filter with paginated vendor order requests', () => {
+    service.orders(20, 0, 'PROCESSING').subscribe();
+    const request = http.expectOne('/api/v1/vendor/orders?limit=20&offset=0&status=PROCESSING');
+    expect(request.request.method).toBe('GET');
+    request.flush(response({ orders: [], limit: 20, offset: 0, hasMore: false }));
+  });
+
   it('starts order processing with an audit note', () => {
     service.updateOrderStatus('order-4', 'PROCESSING', 'Accepted').subscribe();
     const request = http.expectOne('/api/v1/vendor/orders/order-4/status');

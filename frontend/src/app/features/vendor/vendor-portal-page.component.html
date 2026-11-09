@@ -159,15 +159,36 @@
     }
 
     @if(activeTab()==='orders'){
-      <div class="vendor-section-heading"><div><span class="eyebrow">FULFILMENT</span><h2>Vendor orders</h2><p>Process paid orders and record shipment details when dispatching.</p></div></div>
+      <div class="vendor-section-heading"><div><span class="eyebrow">FULFILMENT</span><h2>Vendor orders</h2><p>Filter your order queue, review its history and record shipment details.</p></div></div>
+      <div class="vendor-order-tools">
+        <label for="vendor-order-status">Order status</label>
+        <select id="vendor-order-status" [value]="orderStatusFilter()" (change)="setOrderStatusFilter($any($event.target).value)">
+          <option value="ALL">All statuses</option><option value="PAID">Paid</option><option value="PROCESSING">Processing</option><option value="FULFILLED">Fulfilled</option><option value="CANCELLED">Cancelled</option>
+        </select>
+        <button class="secondary-button" type="button" (click)="loadOrders()" [disabled]="ordersLoading()">{{ordersLoading()?'Refreshing...':'Refresh orders'}}</button>
+      </div>
+      @if(ordersLoading()){<div class="catalog-state" role="status">Loading vendor orders...</div>}
+      @else if(ordersError()){<div class="vendor-alert" role="alert">{{ordersError()}} <button class="text-button" type="button" (click)="loadOrders()">Try again</button></div>}
+      @else if(orders().length===0){<div class="customer-empty"><h2>{{orderStatusFilter()==='ALL'?'No orders yet.':'No '+orderStatusFilter().toLowerCase()+' orders.'}}</h2><p>{{orderStatusFilter()==='ALL'?'Paid orders for your store will appear here.':'Try another status filter to see more orders.'}}</p></div>}
       @for(order of orders();track order.id){
         <article class="vendor-order-card">
           <div class="vendor-order-top"><div><span class="eyebrow">ORDER {{order.id.slice(0,8)}}</span><h3>{{order.items.length}} line items</h3><small>{{order.createdAt|date:'medium'}}</small></div><span class="status-pill">{{order.status}}</span></div>
           <div class="vendor-order-lines">@for(line of order.items;track line.id){<div><span>{{line.productName}} × {{line.quantity}}</span><strong>{{line.lineTotal|currency:line.currency}}</strong></div>}</div>
           @if(order.shipment){<div class="vendor-shipment"><strong>Shipment · {{order.shipment.carrier}}</strong><span>Tracking: {{order.shipment.trackingNumber}}</span>@if(order.shipment.trackingUrl){<a [href]="order.shipment.trackingUrl" target="_blank" rel="noopener noreferrer">Open tracking ↗</a>}@if(order.shipment.estimatedDeliveryDate){<small>Estimated delivery: {{order.shipment.estimatedDeliveryDate}}</small>}</div>}
-          <div class="vendor-order-footer"><strong>Subtotal {{order.subtotal|currency:order.currency}}</strong><div>@if(order.status==='PAID'){<button class="primary-button" type="button" (click)="startProcessing(order)" [disabled]="busy()">Start processing</button>}@else if(order.status==='PROCESSING'){<button class="primary-button" type="button" (click)="openDispatch(order)">Record dispatch</button>}</div></div>
+          @if(order.statusHistory.length>0){
+            <div class="vendor-order-history"><strong>Status history</strong>
+              @for(change of order.statusHistory;track change.id){<div><span><b>{{change.previousStatus}}</b> → <b>{{change.newStatus}}</b><small>{{change.note}}</small></span><time>{{change.createdAt|date:'medium'}}</time></div>}
+            </div>
+          }
+          <div class="vendor-order-footer"><strong>Subtotal {{order.subtotal|currency:order.currency}}</strong><div>@if(order.status==='PAID'){<button class="primary-button" type="button" (click)="startProcessing(order)" [disabled]="busy()">Start processing</button>}@else if(order.status==='PROCESSING'){<button class="primary-button" type="button" (click)="openDispatch(order)" [disabled]="busy()">Record dispatch</button>}</div></div>
         </article>
-      }@empty{<div class="customer-empty"><h2>No orders to process.</h2><p>Paid orders for your store will appear here.</p></div>}
+      }
+      @if(orders().length>0){
+        <nav class="vendor-order-pagination" aria-label="Vendor order pages">
+          <span>Showing {{orderOffset()+1}}–{{orderOffset()+orders().length}} orders</span>
+          <div><button type="button" class="secondary-button" (click)="previousOrdersPage()" [disabled]="ordersLoading()||orderOffset()===0">Previous</button><button type="button" class="secondary-button" (click)="nextOrdersPage()" [disabled]="ordersLoading()||!ordersHasMore()">Next</button></div>
+        </nav>
+      }
       @if(dispatchTarget();as target){
         <div class="vendor-form-panel dispatch-panel"><div class="vendor-section-heading"><div><span class="eyebrow">SHIPMENT DETAILS</span><h3>Dispatch order {{target.id.slice(0,8)}}</h3><p>Recording dispatch will mark this vendor order as fulfilled.</p></div><button class="text-button" type="button" (click)="dispatchTarget.set(null)">Close</button></div>
           <form class="vendor-product-form" (ngSubmit)="dispatch()"><label>Carrier<input name="carrier" [(ngModel)]="carrier" required maxlength="80" /></label><label>Tracking number<input name="trackingNumber" [(ngModel)]="trackingNumber" required maxlength="120" /></label><label class="wide-field">Tracking URL (optional)<input name="trackingUrl" type="url" [(ngModel)]="trackingUrl" maxlength="2048" placeholder="https://" /></label><label>Estimated delivery<input name="estimatedDeliveryDate" type="date" [(ngModel)]="estimatedDeliveryDate" /></label><div class="wide-field vendor-form-actions"><button class="primary-button" type="submit" [disabled]="busy()||!carrier.trim()||!trackingNumber.trim()">{{busy()?'Saving...':'Confirm dispatch'}}</button></div></form>

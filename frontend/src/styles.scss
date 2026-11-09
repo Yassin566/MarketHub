@@ -159,3 +159,17 @@
 .adjustment-history-panel .catalog-state{padding:30px 15px}
 .adjustment-history-panel .customer-empty{padding:30px 15px}
 .adjustment-history-panel .vendor-alert .text-button{margin-left:8px;text-decoration:underline}
+
+
+/* Vendor order queue */
+.vendor-order-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.vendor-order-tools label{font-size:11px;font-weight:700;color:var(--muted)}
+.vendor-order-tools select{min-width:180px;border:1px solid #dfe2e8;border-radius:6px;background:#fff;padding:10px 12px;font:13px 'DM Sans',sans-serif;color:var(--ink)}
+.vendor-order-tools .secondary-button{padding:10px 14px;font-size:12px}
+.vendor-order-history{margin:14px 0;padding:13px 15px;background:#f8f7f3;border-radius:6px}
+.vendor-order-history>strong{font-size:11px}
+.vendor-order-history>div{display:flex;justify-content:space-between;gap:15px;padding:9px 0;border-top:1px solid var(--line);margin-top:8px;font-size:11px}
+.vendor-order-history span{display:grid;gap:4px}.vendor-order-history small,.vendor-order-history time{color:var(--muted);font-size:10px}
+.vendor-order-pagination{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:20px 0;color:var(--muted);font-size:12px}
+.vendor-order-pagination>div{display:flex;gap:8px}.vendor-order-pagination .secondary-button{padding:10px 14px;font-size:12px}
+@media(max-width:520px){.vendor-order-tools{align-items:stretch;flex-direction:column}.vendor-order-tools select{width:100%}.vendor-order-pagination{align-items:stretch;flex-direction:column}.vendor-order-pagination>div{justify-content:space-between}.vendor-order-history>div{align-items:flex-start;flex-direction:column}}

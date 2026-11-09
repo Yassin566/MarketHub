@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorStoreProfileComponent } from './vendor-store-profile.component';
-import { InventoryAdjustment, VendorAnalytics, VendorAnalyticsDaily, VendorInventory, VendorOrder, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
+import { InventoryAdjustment, VendorAnalytics, VendorAnalyticsDaily, VendorInventory, VendorOrder, VendorOrderPage, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
 
 type VendorTab = 'overview' | 'analytics' | 'products' | 'inventory' | 'orders' | 'store';
 
@@ -17,6 +17,12 @@ export class VendorPortalPageComponent {
   readonly products = signal<VendorProduct[]>([]);
   readonly inventory = signal<VendorInventory[]>([]);
   readonly orders = signal<VendorOrder[]>([]);
+  readonly ordersLoading = signal(false);
+  readonly ordersError = signal('');
+  readonly orderOffset = signal(0);
+  readonly orderLimit = 20;
+  readonly ordersHasMore = signal(false);
+  readonly orderStatusFilter = signal('ALL');
   readonly loading = signal(true);
   readonly busy = signal(false);
   readonly error = signal('');
@@ -64,7 +70,7 @@ export class VendorPortalPageComponent {
   load(): void {
     this.loading.set(true);
     this.error.set('');
-    let pending = 3;
+    let pending = 2;
     const done = (): void => { pending -= 1; if (pending === 0) this.loading.set(false); };
     this.api.products().subscribe({
       next: r => { this.products.set(r.data); done(); },
@@ -74,10 +80,7 @@ export class VendorPortalPageComponent {
       next: r => { this.inventory.set(r.data); done(); },
       error: () => { this.error.set('Could not load inventory.'); done(); }
     });
-    this.api.orders(20, 0).subscribe({
-      next: r => { this.orders.set(r.data.orders); done(); },
-      error: () => { this.error.set('Could not load vendor orders.'); done(); }
-    });
+    this.loadOrders(0, done);
     this.loadAnalytics();
   }
 
@@ -244,6 +247,41 @@ export class VendorPortalPageComponent {
     });
   }
 
+  setOrderStatusFilter(status: string): void {
+    if (this.orderStatusFilter() === status) return;
+    this.orderStatusFilter.set(status);
+    this.loadOrders(0);
+  }
+
+  loadOrders(offset = this.orderOffset(), complete?: () => void): void {
+    this.orderOffset.set(offset);
+    this.ordersLoading.set(true);
+    this.ordersError.set('');
+    const status = this.orderStatusFilter();
+    this.api.orders(this.orderLimit, offset, status === 'ALL' ? undefined : status).subscribe({
+      next: (response: { data: VendorOrderPage }) => {
+        this.orders.set(response.data.orders);
+        this.orderOffset.set(response.data.offset);
+        this.ordersHasMore.set(response.data.hasMore);
+        this.ordersLoading.set(false);
+        complete?.();
+      },
+      error: () => {
+        this.ordersLoading.set(false);
+        this.ordersError.set('Orders could not be loaded. Check your connection and try again.');
+        complete?.();
+      }
+    });
+  }
+
+  previousOrdersPage(): void {
+    this.loadOrders(Math.max(0, this.orderOffset() - this.orderLimit));
+  }
+
+  nextOrdersPage(): void {
+    if (this.ordersHasMore()) this.loadOrders(this.orderOffset() + this.orderLimit);
+  }
+
   startProcessing(order: VendorOrder): void {
     this.busy.set(true);
     this.api.updateOrderStatus(order.id, 'PROCESSING', 'Vendor accepted order and started processing.').subscribe({
@@ -284,7 +322,5 @@ export class VendorPortalPageComponent {
     this.api.products().subscribe({ next: r => this.products.set(r.data), error: () => this.error.set('Could not refresh products.') });
     this.api.inventory().subscribe({ next: r => this.inventory.set(r.data), error: () => this.error.set('Could not refresh inventory.') });
   }
-  private reloadOrders(): void {
-    this.api.orders(20, 0).subscribe({ next: r => this.orders.set(r.data.orders), error: () => this.error.set('Could not refresh orders.') });
-  }
+  private reloadOrders(): void { this.loadOrders(this.orderOffset()); }
 }
