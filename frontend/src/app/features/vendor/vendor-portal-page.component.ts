@@ -1,13 +1,14 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { VendorStoreProfileComponent } from './vendor-store-profile.component';
 import { VendorAnalytics, VendorAnalyticsDaily, VendorInventory, VendorOrder, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
 
-type VendorTab = 'overview' | 'analytics' | 'products' | 'inventory' | 'orders';
+type VendorTab = 'overview' | 'analytics' | 'products' | 'inventory' | 'orders' | 'store';
 
 @Component({
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, FormsModule],
+  imports: [CurrencyPipe, DatePipe, FormsModule, VendorStoreProfileComponent],
   templateUrl: './vendor-portal-page.component.html'
 })
 export class VendorPortalPageComponent {
