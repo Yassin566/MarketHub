@@ -35,7 +35,9 @@ mvn spring-boot:run
 
 The runner executes `src/main/resources/db/demo-seed.sql`. The script uses deterministic IDs and conflict-safe inserts, so restarting the application does not create duplicate demo records. It does not delete existing data.
 
-**Safety:** use the `dev` profile only with a dedicated local development database. The seed includes demo accounts with a shared test password and fictional order/payment data. The seeder is not registered in the default, test, staging, or production profiles. Never activate `dev` against a shared or production database.
+All demo accounts use the shared development-only password `MarketHubDemo2026!` (17 characters). Re-running the seed updates the demo accounts’ password hashes so existing local demo accounts receive the new password.
+
+**Safety:** use the `dev` profile only with a dedicated local development database. The seed includes demo accounts with a shared development-only password and fictional order/payment data. The seeder is not registered in the default, test, staging, or production profiles. Never activate `dev` against a shared or production database.
 
 ## CI environment
 
