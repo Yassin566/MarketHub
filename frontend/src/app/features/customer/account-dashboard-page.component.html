@@ -1,0 +1,18 @@
+<section class="customer-shell account-dashboard">
+  <div class="customer-heading"><div><span class="eyebrow">CUSTOMER ACCOUNT</span><h1>Your MarketHub.</h1><p>Your purchases, delivery updates and marketplace activity in one place.</p></div><a class="secondary-button" routerLink="/products">Continue shopping</a></div>
+  @if(error()){<div class="error-banner" role="alert">{{error()}}</div>}
+  @if(loading()){<div class="catalog-state" role="status">Loading your account...</div>}
+  @else{
+    <div class="account-shortcuts">
+      <a class="account-shortcut" routerLink="/orders"><span class="eyebrow">PURCHASES</span><strong>Order history</strong><span>View status, items and shipment tracking →</span></a>
+      <a class="account-shortcut" routerLink="/notifications"><span class="eyebrow">UPDATES</span><strong>Notifications @if(unreadCount()>0){<span class="notification-count">{{unreadCount()}}</span>}</strong><span>Payment, order and delivery messages →</span></a>
+      <a class="account-shortcut" routerLink="/cart"><span class="eyebrow">SHOPPING</span><strong>Your cart</strong><span>Review items and continue checkout →</span></a>
+    </div>
+    <div class="account-section-heading"><div><span class="eyebrow">PURCHASE ACTIVITY</span><h2>Recent orders</h2></div><a class="text-button" routerLink="/orders">All orders →</a></div>
+    @if(!orders().length){<div class="customer-empty"><h3>No orders yet</h3><p>When you place an order, its progress will appear here.</p><a class="primary-button" routerLink="/products">Explore products</a></div>}
+    @else{@for(order of orders();track order.id){<a class="order-card" [routerLink]="['/orders',order.id]"><div><span class="eyebrow">PLACED {{order.createdAt|date:'mediumDate'}}</span><h3>{{order.items.length}} items · {{order.id.slice(0,8)}}</h3><p>{{order.items[0]?.productName}}@if(order.items.length>1){ · +{{order.items.length-1}} more}</p></div><div class="order-card-meta"><strong>{{order.total|currency:order.currency}}</strong><span class="status-pill">{{order.status}}</span></div></a>}}
+    <div class="account-section-heading"><div><span class="eyebrow">LATEST UPDATES</span><h2>Recent notifications</h2></div><a class="text-button" routerLink="/notifications">All notifications →</a></div>
+    @if(!notifications().length){<p class="muted">You’re all caught up. New updates will appear here.</p>}
+    @else{@for(item of notifications();track item.id){<article class="account-notification" [class.unread]="!item.readAt"><div><strong>{{item.title}}</strong><p>{{item.message}}</p><time>{{item.createdAt|date:'medium'}}</time></div>@if(item.orderId){<a class="text-button" [routerLink]="['/orders',item.orderId]">View order →</a>}</article>}}
+  }
+</section>
