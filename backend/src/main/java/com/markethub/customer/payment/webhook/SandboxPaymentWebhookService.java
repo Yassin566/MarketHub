@@ -22,7 +22,7 @@ public class SandboxPaymentWebhookService {
     }
 
     public record WebhookResult(boolean duplicate, String outcome) {}
-    private record PaymentState(UUID id, UUID orderId, String status, BigDecimal amount, String currency) {}
+    private record PaymentState(UUID id, UUID orderId, UUID customerId, String status, BigDecimal amount, String currency) {}
     private record Reservation(UUID id, UUID productId, long quantity, String status, boolean unexpired) {}
 
     @Transactional
@@ -52,13 +52,13 @@ public class SandboxPaymentWebhookService {
         }
 
         List<PaymentState> matches = jdbc.query("""
-                SELECT id, order_id, status, amount, currency
-                FROM payments
+                SELECT p.id, p.order_id, co.customer_user_id, p.status, p.amount, p.currency
+                FROM payments p JOIN customer_orders co ON co.id = p.order_id
                 WHERE provider_code = ? AND provider_reference = ?
                 FOR UPDATE
                 """, (rs, row) -> new PaymentState(
                 rs.getObject("id", UUID.class), rs.getObject("order_id", UUID.class),
-                rs.getString("status"), rs.getBigDecimal("amount"), rs.getString("currency")),
+                rs.getObject("customer_user_id", UUID.class), rs.getString("status"), rs.getBigDecimal("amount"), rs.getString("currency")),
                 PROVIDER_CODE, providerReference);
         if (matches.isEmpty()) {
             throw new IllegalStateException("Payment reference was not found");
@@ -146,6 +146,14 @@ public class SandboxPaymentWebhookService {
                     UPDATE payments SET status = 'SUCCEEDED', updated_at = now()
                     WHERE id = ? AND status = 'PROCESSING'
                     """, payment.id());
+            jdbc.update("""
+                    INSERT INTO customer_notifications
+                        (id, customer_user_id, order_id, event_key, type, title, message)
+                    VALUES (?, ?, ?, ?, 'PAYMENT', 'Payment confirmed',
+                            'Your payment was successful and your order is confirmed.')
+                    ON CONFLICT (customer_user_id, event_key) DO NOTHING
+                    """, UUID.randomUUID(), payment.customerId(), payment.orderId(),
+                    "payment:" + payment.id() + ":SUCCEEDED");
             markProcessed(eventId, "SUCCEEDED");
             return new WebhookResult(false, "SUCCEEDED");
         }
@@ -180,6 +188,14 @@ public class SandboxPaymentWebhookService {
                     UPDATE payments SET status = 'FAILED', updated_at = now()
                     WHERE id = ? AND status = 'PROCESSING'
                     """, payment.id());
+            jdbc.update("""
+                    INSERT INTO customer_notifications
+                        (id, customer_user_id, order_id, event_key, type, title, message)
+                    VALUES (?, ?, ?, ?, 'PAYMENT', 'Payment failed',
+                            'Your payment could not be completed. Review your order and try again.')
+                    ON CONFLICT (customer_user_id, event_key) DO NOTHING
+                    """, UUID.randomUUID(), payment.customerId(), payment.orderId(),
+                    "payment:" + payment.id() + ":FAILED");
             markProcessed(eventId, "FAILED");
             return new WebhookResult(false, "FAILED");
         }
