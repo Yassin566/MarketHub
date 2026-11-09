@@ -67,7 +67,7 @@ test('admin rejection requires a reason and records it with the request', async 
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Reject', exact: true }).click();
   await page.getByRole('button', { name: 'Confirm rejection' }).click();
-  await expect(page.getByRole('alert')).toContainText('Enter a rejection reason');
+  await expect(page.locator('.application-dialog').getByRole('alert')).toContainText('Enter a rejection reason');
   expect(submitted).toBeUndefined();
 
   await page.getByLabel('Reason for rejection').fill('Business details could not be verified');
@@ -80,7 +80,7 @@ test('vendor applications show a retry state when the API is unavailable', async
   await signInAs(page);
   await page.route('**/api/v1/admin/vendor-applications**', route => route.fulfill({ status: 503, json: { error: { message: 'Service unavailable' } } }));
   await page.goto('/admin');
-  await expect(page.getByRole('alert')).toContainText('Service unavailable');
+  await expect(page.locator('.vendor-applications').getByRole('alert')).toContainText('Service unavailable');
   await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
 });
 
