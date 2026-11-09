@@ -1,13 +1,21 @@
-import {Component, inject, signal} from '@angular/core';
-import {CurrencyPipe} from '@angular/common';
+import {Component,inject,signal} from '@angular/core';
+import {CurrencyPipe,DatePipe,DecimalPipe} from '@angular/common';
 import {ActivatedRoute,RouterLink} from '@angular/router';
 import {CatalogService,Product} from '../../core/catalog/catalog.service';
 import {AuthService} from '../../core/auth/auth.service';
-import {CustomerService} from '../../core/customer/customer.service';
-@Component({standalone:true,imports:[CurrencyPipe,RouterLink],templateUrl: './product-detail-page.component.html'})
+import {CustomerService,ProductReview,ProductReviewPage} from '../../core/customer/customer.service';
+@Component({standalone:true,imports:[CurrencyPipe,DatePipe,DecimalPipe,RouterLink],templateUrl:'./product-detail-page.component.html'})
 export class ProductDetailPageComponent{
  private catalog=inject(CatalogService);private route=inject(ActivatedRoute);private customer=inject(CustomerService);readonly auth=inject(AuthService);
  readonly product=signal<Product|null>(null);readonly loading=signal(true);readonly error=signal('');readonly quantity=signal(1);readonly adding=signal(false);readonly message=signal('');
- constructor(){const slug=this.route.snapshot.paramMap.get('slug')??'';this.catalog.get(slug).subscribe({next:r=>{this.product.set(r.data);this.loading.set(false);},error:()=>{this.error.set('This product is unavailable or has been removed.');this.loading.set(false);}});}
- addToCart(item:Product){const q=this.quantity();if(!Number.isInteger(q)||q<1||q>1000){this.message.set('Choose a quantity between 1 and 1000.');return;}this.adding.set(true);this.message.set('');this.customer.putItem(item.id,q).subscribe({next:()=>{this.adding.set(false);this.message.set('Added to your cart.');},error:()=>{this.adding.set(false);this.message.set('Could not add this product. Please check stock and try again.');}});}
+ readonly reviews=signal<ProductReview[]>([]);readonly reviewPage=signal(0);readonly reviewMeta=signal<ProductReviewPage|null>(null);readonly reviewsLoading=signal(false);readonly reviewsError=signal('');
+ readonly rating=signal(5);readonly reviewText=signal('');readonly submittingReview=signal(false);readonly reviewMessage=signal('');readonly ownedReview=signal<ProductReview|null>(null);readonly editingReview=signal(false);
+ constructor(){const slug=this.route.snapshot.paramMap.get('slug')??'';this.catalog.get(slug).subscribe({next:r=>{this.product.set(r.data);this.loading.set(false);this.loadReviews();},error:()=>{this.error.set('This product is unavailable or has been removed.');this.loading.set(false);}});}
+ loadReviews():void{const item=this.product();if(!item)return;this.reviewsLoading.set(true);this.reviewsError.set('');this.customer.productReviews(item.id,10,this.reviewPage()*10).subscribe({next:r=>{this.reviews.set(r.data.reviews);this.reviewMeta.set(r.data);this.reviewsLoading.set(false);},error:()=>{this.reviewsError.set('Reviews could not be loaded. Please try again.');this.reviewsLoading.set(false);}});}
+ changeReviewPage(page:number):void{this.reviewPage.set(page);this.loadReviews();}
+ addToCart(item:Product):void{const q=this.quantity();if(!Number.isInteger(q)||q<1||q>1000){this.message.set('Choose a quantity between 1 and 1000.');return;}this.adding.set(true);this.message.set('');this.customer.putItem(item.id,q).subscribe({next:()=>{this.adding.set(false);this.message.set('Added to your cart.');},error:()=>{this.adding.set(false);this.message.set('Could not add this product. Please check stock and try again.');}});}
+ submitReview():void{const item=this.product();if(!item||this.rating()<1||this.rating()>5||this.reviewText().length>2000)return;this.submittingReview.set(true);this.reviewMessage.set('');const own=this.ownedReview();const request=this.editingReview()&&own?this.customer.updateProductReview(own.id,this.rating(),this.reviewText().trim()):this.customer.createProductReview(item.id,this.rating(),this.reviewText().trim());request.subscribe({next:r=>{this.ownedReview.set(r.data);this.editingReview.set(false);this.submittingReview.set(false);this.reviewMessage.set('Your review has been saved.');this.reviewText.set('');this.reviewPage.set(0);this.loadReviews();},error:e=>{this.submittingReview.set(false);this.reviewMessage.set(e?.status===409?'You have already reviewed this product.':e?.status===403?'A fulfilled order containing this product is required before reviewing.':'Your review could not be saved. Please try again.');}});}
+ editOwnReview():void{const r=this.ownedReview();if(!r)return;this.rating.set(r.rating);this.reviewText.set(r.reviewText??'');this.editingReview.set(true);this.reviewMessage.set('');}
+ deleteOwnReview():void{const r=this.ownedReview();if(!r||!confirm('Delete your review?'))return;this.customer.deleteProductReview(r.id).subscribe({next:()=>{this.ownedReview.set(null);this.reviewMessage.set('Your review was deleted.');this.loadReviews();},error:()=>this.reviewMessage.set('Your review could not be deleted. Please try again.')});}
+ cancelEdit():void{this.editingReview.set(false);this.reviewText.set('');this.rating.set(5);}
 }
