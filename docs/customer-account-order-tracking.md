@@ -48,3 +48,7 @@ npm install
 npx playwright install chromium
 npm test
 ```
+
+## Continuous integration
+
+The customer account changes are verified through the repository's frontend build/unit-test workflow, Playwright browser-test workflow, and backend PostgreSQL 17 verification workflow. The backend application code is unchanged by this feature.
