@@ -29,6 +29,10 @@ test('admin can review and confirm a provider payment outcome with an audit reco
   await page.route('**/api/v1/admin/payments**', async route => {
     const request = route.request();
     const url = new URL(request.url());
+    if (url.pathname.endsWith('/reconciliation')) {
+      await route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) });
+      return;
+    }
     if (url.pathname.endsWith('/resolution') && request.method() === 'POST') {
       submittedBody = request.postDataJSON() as Record<string, unknown>;
       resolved = true;
@@ -88,6 +92,10 @@ test('admin resolution form validates evidence before showing confirmation', asy
     route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) })
   );
   await page.route('**/api/v1/admin/payments**', async route => {
+    if (new URL(route.request().url()).pathname.endsWith('/reconciliation')) {
+      await route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) });
+      return;
+    }
     if (route.request().method() === 'POST') postCount++;
     await route.fulfill({ json: apiResponse({
       items: [{
