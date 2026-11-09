@@ -31,6 +31,7 @@ public class VendorOrderService {
     @Transactional(readOnly = true)
     public OrderPage list(UUID userId, int limit, int offset) { return list(userId, limit, offset, null); }
 
+    @Transactional(readOnly = true)
     public OrderPage list(UUID userId, int limit, int offset, String requestedStatus) {
         if (limit < 1 || limit > MAX_PAGE_SIZE) throw new IllegalArgumentException("limit must be between 1 and " + MAX_PAGE_SIZE);
         if (offset < 0) throw new IllegalArgumentException("offset must not be negative");
