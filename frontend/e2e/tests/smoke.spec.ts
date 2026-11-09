@@ -96,3 +96,30 @@ test('anonymous visitors can read public product reviews without a customer revi
   await expect(page.getByRole('heading', { name: 'Customer reviews' })).toBeVisible();
   await expect(page.getByText('No published reviews yet.')).toBeVisible();
 });
+
+
+test('catalogue cards show published review ratings and an unrated state', async ({ page }) => {
+  const response = {
+    success: true, error: null, timestamp: '2026-11-09T10:00:00Z',
+    data: {
+      content: [
+        { id: 'rated-1', vendorId: 'vendor-1', name: 'Rated product', slug: 'rated-product',
+          price: 19.99, currency: 'EUR', createdAt: '2026-11-01T00:00:00Z',
+          averageRating: 4.5, reviewCount: 2 },
+        { id: 'new-1', vendorId: 'vendor-2', name: 'New product', slug: 'new-product',
+          price: 9.99, currency: 'EUR', createdAt: '2026-11-02T00:00:00Z',
+          averageRating: null, reviewCount: 0 }
+      ],
+      totalElements: 2, totalPages: 1, number: 0, size: 12, first: true, last: true
+    }
+  };
+  await page.route('**/api/v1/products?**', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify(response)
+  }));
+  await page.goto('/products');
+  const ratedCard = page.locator('.product-card').filter({ hasText: 'Rated product' });
+  const newCard = page.locator('.product-card').filter({ hasText: 'New product' });
+  await expect(ratedCard.getByText('4.5', { exact: true })).toBeVisible();
+  await expect(ratedCard.getByText('2 reviews')).toBeVisible();
+  await expect(newCard.getByText('No reviews yet')).toBeVisible();
+});
