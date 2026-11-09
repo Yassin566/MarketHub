@@ -1,2 +1,37 @@
-<section class="customer-shell"><a class="back-link" routerLink="/cart">← Back to cart</a><div class="customer-heading"><div><span class="eyebrow">SECURE CHECKOUT</span><h1>Review your order.</h1><p>We recheck prices and stock before creating your order.</p></div></div>
-@if(loading()){<div class="catalog-state">Validating your cart...</div>}@else if(error()){<div class="error-banner" role="alert">{{error()}}</div>}@else if(review();as r){@if(!r.valid){<div class="error-banner">Your cart needs attention: {{r.issues.join(' · ')}}</div><a class="secondary-button" routerLink="/cart">Return to cart</a>}@else{<div class="checkout-layout"><div class="checkout-lines">@for(line of r.lines;track line.productId){<div class="checkout-line"><span>{{line.productName}} × {{line.quantity}}</span><strong>{{line.lineTotal|currency:line.currency}}</strong></div>}</div><aside class="cart-summary"><span class="eyebrow">TOTAL</span><h2>{{r.subtotal|currency:r.currency||'USD'}}</h2><p>Shipping and taxes are not included in this project phase.</p><button class="primary-button" type="button" (click)="placeOrder()" [disabled]="busy()">{{busy()?'Creating order...':'Place order and request sandbox payment'}}</button><p class="fine-print">Sandbox only. No real payment is collected. Your order is reserved for 15 minutes.</p></aside></div>}}</section>
+<section class="customer-shell">
+  <a class="back-link" routerLink="/cart">← Back to cart</a>
+  <div class="customer-heading"><div><span class="eyebrow">SECURE CHECKOUT</span><h1>Review your order.</h1><p>We recheck prices and stock before creating your order.</p></div></div>
+  @if(error()){<div class="error-banner" role="alert">{{error()}}</div>}
+  @if(loading()){<div class="catalog-state" role="status">Validating your cart...</div>}
+  @else if(review();as r){
+    @if(!r.valid){
+      <div class="checkout-invalid" role="alert"><h2>Your cart needs attention</h2><p>Update your cart before placing this order.</p>
+        <ul>@for(issue of r.issues;track issue){<li>{{issue}}</li>}</ul>
+      </div>
+      <div class="checkout-lines">
+        @for(line of r.lines;track line.productId){
+          <div class="checkout-line" [class.checkout-line-invalid]="!line.eligible">
+            <span>{{line.productName}} × {{line.quantity}} @if(!line.eligible){<small>{{line.issue}}</small>}</span>
+            <strong>{{line.lineTotal|currency:line.currency}}</strong>
+          </div>
+        }
+      </div>
+      <div class="checkout-actions"><a class="secondary-button" routerLink="/cart">Update cart</a><button class="secondary-button" type="button" (click)="refresh()" [disabled]="loading()">Recheck availability</button></div>
+    }@else{
+      <div class="checkout-layout">
+        <div class="checkout-lines">
+          <h2>Order items</h2>
+          @for(line of r.lines;track line.productId){
+            <div class="checkout-line"><span>{{line.productName}} × {{line.quantity}}</span><strong>{{line.lineTotal|currency:line.currency}}</strong></div>
+          }
+          <div class="checkout-line total-line"><b>Subtotal</b><strong>{{r.subtotal|currency:r.currency||'USD'}}</strong></div>
+        </div>
+        <aside class="cart-summary"><span class="eyebrow">ORDER SUMMARY</span><h2>{{r.subtotal|currency:r.currency||'USD'}}</h2>
+          <p>Shipping and taxes are not included in this project phase. The server calculates the final order total.</p>
+          <button class="primary-button" type="button" (click)="placeOrder()" [disabled]="busy()">{{busy()?'Creating order...':'Place order and request sandbox payment'}}</button>
+          <p class="fine-print">Sandbox only. No real payment is collected. Inventory is reserved for 15 minutes after order creation.</p>
+        </aside>
+      </div>
+    }
+  }
+</section>

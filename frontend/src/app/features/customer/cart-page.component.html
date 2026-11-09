@@ -1,2 +1,28 @@
-<section class="customer-shell"><div class="customer-heading"><div><span class="eyebrow">YOUR MARKETPLACE</span><h1>Your cart.</h1><p>Your saved items, ready when you are.</p></div><a class="back-link" routerLink="/products">← Continue shopping</a></div>
-@if(loading()){<div class="catalog-state">Loading your cart...</div>}@else if(error()){<div class="error-banner" role="alert">{{error()}}</div>}@else if(cart();as c){@if(!c.items.length){<div class="customer-empty"><h2>Your cart is taking a little break.</h2><p>Discover something from an independent store and add it here.</p><a class="primary-button" routerLink="/products">Explore products</a></div>}@else{<div class="cart-layout"><div class="cart-lines">@for(item of c.items;track item.productId){<article class="cart-line"><div class="cart-art">m.</div><div class="cart-line-copy"><h2>{{item.productName}}</h2><p>{{item.unitPrice|currency:item.currency}} each · {{item.availableQuantity}} available</p><div class="cart-controls"><label>Quantity <input type="number" min="1" max="1000" [value]="item.quantity" (change)="setQuantity(item.productId,$event)"></label><button class="text-button" type="button" (click)="remove(item.productId)">Remove</button></div></div><strong>{{item.unitPrice*item.quantity|currency:item.currency}}</strong></article>}</div><aside class="cart-summary"><span class="eyebrow">ORDER SUMMARY</span><h2>{{c.items.length}} items</h2><p>Subtotal will be confirmed at checkout.</p><button class="primary-button" type="button" (click)="review()" [disabled]="busy()">Review checkout <span>→</span></button></aside></div>}}</section>
+<section class="customer-shell">
+  <div class="customer-heading"><div><span class="eyebrow">YOUR MARKETPLACE</span><h1>Your cart.</h1><p>Your saved items, ready when you are.</p></div><a class="back-link" routerLink="/products">← Continue shopping</a></div>
+  @if(error()){<div class="error-banner" role="alert">{{error()}} @if(!loading()){<button class="text-button" type="button" (click)="load()">Retry</button>}</div>}
+  @if(notice()){<p class="cart-message" role="status">{{notice()}}</p>}
+  @if(loading()){<div class="catalog-state" role="status">Loading your cart...</div>}
+  @else if(cart();as c){
+    @if(!c.items.length){<div class="customer-empty"><h2>Your cart is taking a little break.</h2><p>Discover something from an independent store and add it here.</p><a class="primary-button" routerLink="/products">Explore products</a></div>}
+    @else{
+      <div class="cart-layout">
+        <div class="cart-lines">
+          @for(item of c.items;track item.productId){
+            <article class="cart-line" [attr.aria-busy]="busyProduct()===item.productId">
+              <div class="cart-art" aria-hidden="true">m.</div>
+              <div class="cart-line-copy"><h2>{{item.productName}}</h2><p>{{item.unitPrice|currency:item.currency}} each · {{item.availableQuantity}} available</p>
+                <div class="cart-controls"><label>Quantity <input type="number" min="1" max="1000" [value]="item.quantity" [disabled]="busy()" (change)="setQuantity(item.productId,$event)"></label>
+                  <button class="text-button" type="button" [disabled]="busy()" (click)="remove(item.productId)">{{busyProduct()===item.productId?'Updating...':'Remove'}}</button></div>
+              </div><strong>{{item.unitPrice*item.quantity|currency:item.currency}}</strong>
+            </article>
+          }
+        </div>
+        <aside class="cart-summary"><span class="eyebrow">ORDER SUMMARY</span><h2>{{c.items.length}} {{c.items.length===1?'item':'items'}}</h2>
+          <p>Prices and available stock are checked again before an order is created.</p>
+          <button class="primary-button" type="button" (click)="review()" [disabled]="busy()">{{busy()?'Checking cart...':'Review checkout'}} <span>→</span></button>
+        </aside>
+      </div>
+    }
+  }
+</section>
