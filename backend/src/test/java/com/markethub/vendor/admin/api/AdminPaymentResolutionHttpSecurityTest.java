@@ -161,6 +161,89 @@ class AdminPaymentResolutionHttpSecurityTest {
                 Long.class, productId)).isEqualTo(5L);
     }
 
+    @Test
+    void resolutionCanBeReadByAdminsAndRecordsAuthenticatedActor() throws Exception {
+        Payment payment = createProcessingPayment();
+        jdbc.update("update payments set status='REQUIRES_REVIEW' where id=?", payment.id());
+
+        mockMvc.perform(post("/api/v1/admin/payments/{paymentId}/resolution", payment.id())
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"CONFIRM_FAILED",
+                                 "evidenceReference":"provider-case-readback",
+                                 "reason":"Provider confirms the payment failed",
+                                 "actorUserId":"00000000-0000-0000-0000-000000000001"}
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/admin/payments/{paymentId}/resolution", payment.id())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.actorEmail")
+                        .value(org.hamcrest.Matchers.containsString("resolution-admin-")))
+                .andExpect(jsonPath("$.data.evidenceReference").value("provider-case-readback"))
+                .andExpect(jsonPath("$.data.reason").value("Provider confirms the payment failed"))
+                .andExpect(jsonPath("$.data.decision").value("CONFIRM_FAILED"));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/admin/payments/{paymentId}/resolution", payment.id())
+                        .header("Authorization", "Bearer " + customerToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void resolutionHistoryIsNotFoundUntilPaymentHasBeenResolved() throws Exception {
+        Payment payment = createProcessingPayment();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/admin/payments/{paymentId}/resolution", payment.id())
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unauthenticatedUserCannotResolvePayment() throws Exception {
+        Payment payment = createProcessingPayment();
+        jdbc.update("update payments set status='REQUIRES_REVIEW' where id=?", payment.id());
+
+        mockMvc.perform(post("/api/v1/admin/payments/{paymentId}/resolution", payment.id())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"CONFIRM_FAILED",
+                                 "evidenceReference":"provider-case-unauthenticated",
+                                 "reason":"Should not be accepted"}
+                                """))
+                .andExpect(status().isForbidden());
+
+        assertThat(jdbc.queryForObject("select status from payments where id=?", String.class, payment.id()))
+                .isEqualTo("REQUIRES_REVIEW");
+        assertThat(jdbc.queryForObject("select count(*) from payment_manual_resolutions where payment_id=?",
+                Long.class, payment.id())).isZero();
+    }
+
+    @Test
+    void invalidResolutionInputDoesNotChangePaymentOrCreateAudit() throws Exception {
+        Payment payment = createProcessingPayment();
+        jdbc.update("update payments set status='REQUIRES_REVIEW' where id=?", payment.id());
+
+        mockMvc.perform(post("/api/v1/admin/payments/{paymentId}/resolution", payment.id())
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"CONFIRM_FAILED",
+                                 "evidenceReference":"provider-case-invalid",
+                                 "reason":"   "}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        assertThat(jdbc.queryForObject("select status from payments where id=?", String.class, payment.id()))
+                .isEqualTo("REQUIRES_REVIEW");
+        assertThat(jdbc.queryForObject("select count(*) from payment_manual_resolutions where payment_id=?",
+                Long.class, payment.id())).isZero();
+    }
+
     private Payment createProcessingPayment() throws Exception {
         mockMvc.perform(put("/api/v1/customer/cart/items")
                         .header("Authorization", "Bearer " + customerToken)
