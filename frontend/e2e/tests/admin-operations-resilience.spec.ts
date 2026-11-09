@@ -43,7 +43,7 @@ test('admin product search and pagination preserve API filters and offsets', asy
   await expect(page.getByText('First page product')).toBeVisible();
   await page.getByLabel('Search products or vendors').fill('Northstar');
   await page.getByLabel('Product status').selectOption('ACTIVE');
-  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await page.locator('mh-admin-product-management').getByRole('button', { name: 'Search', exact: true }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get('search')).toBe('Northstar');
   expect(requests.at(-1)?.searchParams.get('status')).toBe('ACTIVE');
   await page.getByRole('button', { name: 'Next' }).click();
@@ -90,7 +90,7 @@ test('admin vendor search resets pagination and displays a stale-status conflict
   await page.getByRole('button', { name: 'Next' }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get('offset')).toBe('20');
   await page.getByLabel('Search vendors').fill('owner@example.test');
-  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await page.locator('mh-admin-vendor-management').getByRole('button', { name: 'Search', exact: true }).click();
   await expect.poll(() => requests.at(-1)?.searchParams.get('offset')).toBe('0');
   expect(requests.at(-1)?.searchParams.get('search')).toBe('owner@example.test');
 
@@ -132,5 +132,5 @@ test('admin application review conflict preserves the dialog and asks for refres
   await expect(page.locator('.application-dialog').getByRole('alert'))
     .toContainText('This application has already been reviewed');
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByText('Northstar Goods')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('Northstar Goods')).toBeVisible();
 });
