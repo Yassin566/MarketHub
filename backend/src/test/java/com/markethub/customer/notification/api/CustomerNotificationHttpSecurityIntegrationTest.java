@@ -26,6 +26,7 @@ class CustomerNotificationHttpSecurityIntegrationTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private JwtService jwtService;
+    @Autowired private CustomerNotificationService notificationService;
 
     private UUID customerId;
     private UUID notificationId;
@@ -100,6 +101,20 @@ class CustomerNotificationHttpSecurityIntegrationTest {
 
         mockMvc.perform(get("/api/v1/customer/notifications"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void creatingTheSameBusinessEventTwiceIsIdempotent() {
+        String eventKey = "test-event:" + UUID.randomUUID();
+        var first = notificationService.create(customerId, null, eventKey,
+                "ORDER", "Order update", "Your order is being prepared");
+        var retry = notificationService.create(customerId, null, eventKey,
+                "ORDER", "Order update", "Your order is being prepared");
+
+        org.assertj.core.api.Assertions.assertThat(retry.id()).isEqualTo(first.id());
+        org.assertj.core.api.Assertions.assertThat(jdbc.queryForObject(
+                "select count(*) from customer_notifications where customer_user_id=? and event_key=?",
+                Long.class, customerId, eventKey)).isEqualTo(1L);
     }
 
     @Test
