@@ -14,6 +14,8 @@
 
   <mh-admin-vendor-applications></mh-admin-vendor-applications>
 
+  <mh-admin-vendor-management></mh-admin-vendor-management>
+
   <section class="panel">
     <div class="panel-heading"><div><h2>Payments requiring review</h2><p>Only payments in the review state can be resolved here.</p></div><span class="count">{{ reviewTotal() }} pending</span></div>
     @if (reviewError()) { <div class="notice error" role="alert">{{ reviewError() }}</div> }

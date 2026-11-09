@@ -6,6 +6,7 @@ import {environment} from '../../../environments/environment';
 import {ApiResponse} from '../../core/api/api.models';
 import {AdminProductManagementComponent} from './admin-product-management.component';
 import {AdminVendorApplicationsComponent} from './admin-vendor-applications.component';
+import {AdminVendorManagementComponent} from './admin-vendor-management.component';
 
 interface ReconciliationItem {
   attemptId: string; paymentId: string; orderId: string; providerCode: string;
@@ -33,7 +34,7 @@ interface ResolutionView {
 @Component({
   selector: 'mh-admin-portal-page',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, AdminProductManagementComponent, AdminVendorApplicationsComponent],
+  imports: [DatePipe, DecimalPipe, FormsModule, AdminProductManagementComponent, AdminVendorApplicationsComponent, AdminVendorManagementComponent],
   templateUrl: './admin-portal-page.component.html',
   styleUrl: './admin-portal-page.component.css'
 })

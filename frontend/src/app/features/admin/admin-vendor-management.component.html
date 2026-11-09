@@ -1,0 +1,29 @@
+<section class="panel vendor-management" aria-labelledby="vendor-management-title">
+ <div class="panel-heading"><div><h2 id="vendor-management-title">Vendor management</h2><p>Inspect approved stores and manage vendor access with an auditable reason.</p></div><span class="count">{{total()}} vendors</span></div>
+ <div class="vendor-filters">
+  <label>Vendor status<select [ngModel]="status()" (ngModelChange)="status.set($event);applyFilters()"><option value="APPROVED">Approved</option><option value="SUSPENDED">Suspended</option><option value="ALL">All managed vendors</option></select></label>
+  <label>Search vendors<input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="applyFilters()" placeholder="Store, business or owner email"></label>
+  <button type="button" class="secondary-button" (click)="applyFilters()" [disabled]="loading()">Search</button><button type="button" class="secondary-button" (click)="load()" [disabled]="loading()">Refresh</button>
+ </div>
+ @if(notice()){<div class="vendor-notice" role="status">{{notice()}}</div>}
+ @if(error()){<div class="vendor-error" role="alert"><span>{{error()}}</span><button type="button" class="secondary-button" (click)="load()">Retry</button></div>}
+ @if(loading()){<div class="vendor-state" role="status">Loading vendor records…</div>}
+ @else if(!error()&&vendors().length===0){<div class="vendor-state"><strong>No vendors found</strong><span>Try another status or search term.</span></div>}
+ @else if(vendors().length){
+  <div class="vendor-list">@for(vendor of vendors();track vendor.vendorId){<article class="vendor-row"><div class="vendor-main">
+   <div class="vendor-title"><h3>{{vendor.storeName||vendor.displayName}}</h3><span [class.suspended]="vendor.status==='SUSPENDED'">{{vendor.status}}</span></div>
+   <p>{{vendor.displayName}} · {{vendor.ownerEmail}}</p><small>{{vendor.storeSlug?'/'+vendor.storeSlug:'Store profile not configured'}} · Added {{vendor.createdAt|date:'mediumDate'}}</small>
+   @if(vendor.supportEmail){<small>Store support: {{vendor.supportEmail}}</small>}
+   @if(vendor.lastActionAt){<small class="audit-line">Last action: {{vendor.lastReason}} · {{vendor.lastActorEmail||'Administrator'}} · {{vendor.lastActionAt|date:'medium'}}</small>}
+  </div><button type="button" class="vendor-action" (click)="openAction(vendor)" [disabled]="!!busyId()">{{vendor.status==='APPROVED'?'Suspend vendor':'Reactivate vendor'}}</button></article>}</div>
+  <div class="vendor-pagination"><span>Page {{currentPage()}} of {{pageCount()}} · {{total()}} vendors</span><div><button type="button" (click)="changePage(-1)" [disabled]="offset()===0||loading()">Previous</button><button type="button" (click)="changePage(1)" [disabled]="offset()+limit>=total()||loading()">Next</button></div></div>
+ }
+</section>
+@if(selected();as vendor){<div class="vendor-backdrop"><section class="vendor-dialog" role="dialog" aria-modal="true" aria-labelledby="vendor-action-title">
+ <div class="vendor-dialog-heading"><div><p class="eyebrow">VENDOR ACCESS CONTROL</p><h2 id="vendor-action-title">{{vendor.status==='APPROVED'?'Suspend vendor?':'Reactivate vendor?'}}</h2></div><button type="button" class="vendor-close" aria-label="Close dialog" (click)="closeAction()" [disabled]="!!busyId()">×</button></div>
+ <div class="vendor-context"><strong>{{vendor.storeName||vendor.displayName}}</strong><span>{{vendor.ownerEmail}}</span><span>Current status: {{vendor.status}}</span></div>
+ <p class="vendor-explanation">{{vendor.status==='APPROVED'?'Suspension prevents this store from using approved-vendor operations until an administrator reactivates it.':'Reactivation restores approved-vendor access for this store.'}}</p>
+ @if(validationError()){<div class="vendor-error" role="alert">{{validationError()}}</div>}
+ <label for="vendor-action-reason">Reason <span>(required)</span></label><textarea id="vendor-action-reason" rows="4" maxlength="500" [ngModel]="reason()" (ngModelChange)="reason.set($event)" placeholder="Record why this status change is necessary"></textarea><small class="vendor-count">{{reason().length}}/500 characters</small>
+ <div class="vendor-dialog-actions"><button type="button" class="secondary-button" (click)="closeAction()" [disabled]="!!busyId()">Cancel</button><button type="button" class="vendor-confirm" [class.danger]="vendor.status==='APPROVED'" (click)="submitAction()" [disabled]="!!busyId()">{{busyId()?'Saving…':vendor.status==='APPROVED'?'Confirm suspension':'Confirm reactivation'}}</button></div>
+</section></div>}

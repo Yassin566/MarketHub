@@ -81,7 +81,7 @@ test('vendor applications show a retry state when the API is unavailable', async
   await page.route('**/api/v1/admin/vendor-applications**', route => route.fulfill({ status: 503, json: { error: { message: 'Service unavailable' } } }));
   await page.goto('/admin');
   await expect(page.locator('.vendor-applications').getByRole('alert')).toContainText('Service unavailable');
-  await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+  await expect(page.locator('mh-admin-vendor-applications').getByRole('button', { name: 'Retry' })).toBeVisible();
 });
 
 test('non-admin users cannot access vendor application review', async ({ page }) => {
