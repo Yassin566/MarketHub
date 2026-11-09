@@ -94,6 +94,20 @@ public class VendorOrderService {
             INSERT INTO vendor_order_status_history(id,vendor_order_id,vendor_id,actor_user_id,previous_status,new_status,note)
             VALUES (?,?,?,?,?,?,?)
             """,UUID.randomUUID(),orderId,vendorId,actorId,previous,next,note.trim());
+        jdbc.update("""
+            INSERT INTO customer_notifications
+                (id, customer_user_id, order_id, event_key, type, title, message)
+            SELECT ?, co.customer_user_id, vo.order_id, ?, 'ORDER',
+                   CASE WHEN ? = 'PROCESSING' THEN 'Your order is being prepared' ELSE 'Your order has shipped' END,
+                   CASE WHEN ? = 'PROCESSING'
+                        THEN 'The vendor has started preparing your order.'
+                        ELSE 'The vendor has dispatched your order. Open order details to view tracking information.' END
+            FROM vendor_orders vo
+            JOIN customer_orders co ON co.id = vo.order_id
+            WHERE vo.id = ? AND vo.vendor_id = ?
+            ON CONFLICT (customer_user_id, event_key) DO NOTHING
+            """, UUID.randomUUID(), "vendor-order:" + orderId + ":status:" + next,
+                next, next, orderId, vendorId);
     }
 
     private OrderView load(UUID vendorId, UUID orderId) {
