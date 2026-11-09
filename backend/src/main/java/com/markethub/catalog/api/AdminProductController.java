@@ -71,12 +71,14 @@ public class AdminProductController {
         return ApiResponse.ok(new ProductPage(items,total==null?0:total,limit,offset));
     }
 
+    @Transactional
     @PatchMapping("/{productId}/deactivation")
     public ApiResponse<ProductItem> deactivate(@PathVariable UUID productId,
             @AuthenticationPrincipal MarketHubPrincipal principal, @Valid @RequestBody StatusRequest request) {
         return ApiResponse.ok(changeStatus(productId, principal.userId(), "INACTIVE", request.reason()));
     }
 
+    @Transactional
     @PatchMapping("/{productId}/activation")
     public ApiResponse<ProductItem> activate(@PathVariable UUID productId,
             @AuthenticationPrincipal MarketHubPrincipal principal, @Valid @RequestBody StatusRequest request) {
