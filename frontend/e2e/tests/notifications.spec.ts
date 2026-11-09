@@ -64,6 +64,6 @@ test.describe('customer notification centre', () => {
       }));
     });
     await page.goto('/notifications');
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/vendor');
   });
 });

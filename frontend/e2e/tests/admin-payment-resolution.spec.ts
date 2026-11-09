@@ -123,5 +123,5 @@ test('admin resolution form validates evidence before showing confirmation', asy
 test('non-admin users cannot access the admin resolution portal', async ({ page }) => {
   await signInAs(page, 'CUSTOMER');
   await page.goto('/admin');
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/account');
 });
