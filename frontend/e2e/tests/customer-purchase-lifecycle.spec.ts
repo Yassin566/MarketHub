@@ -115,7 +115,7 @@ test.describe('customer purchase lifecycle', () => {
     await expect(page).toHaveURL(/\/checkout$/);
     await expect(page.getByRole('heading', { name: 'Review your order.' })).toBeVisible();
     await expect(page.getByText('Ceramic Desk Lamp × 2')).toBeVisible();
-    await expect(page.getByText('€48.00')).toBeVisible();
+    await expect(page.locator('.cart-summary h2')).toHaveText('€48.00');
 
     await page.getByRole('button', { name: /Place order and request sandbox payment/ }).click();
     await expect(page).toHaveURL(/\/orders\/order-lifecycle-1\?payment=REQUESTED$/);
