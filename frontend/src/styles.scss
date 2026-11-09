@@ -150,3 +150,12 @@
 .catalog-error p{margin:0 0 14px}
 .product-card:focus-visible{outline:3px solid #596b9d;outline-offset:3px}
 @media(max-width:520px){.catalog-search{flex-wrap:wrap}.catalog-search input{flex-basis:100%}.catalog-search .primary-button,.catalog-search .secondary-button{flex:1}}
+
+
+/* Vendor inventory adjustment history */
+.adjustment-history-panel{margin-top:22px}
+.adjustment-history-panel .vendor-section-heading{margin:0 0 18px}
+.adjustment-history-table .vendor-table{min-width:760px}
+.adjustment-history-panel .catalog-state{padding:30px 15px}
+.adjustment-history-panel .customer-empty{padding:30px 15px}
+.adjustment-history-panel .vendor-alert .text-button{margin-left:8px;text-decoration:underline}

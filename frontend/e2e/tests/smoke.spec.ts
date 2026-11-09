@@ -162,3 +162,48 @@ test('admin can filter reviews and publish or unpublish with an audit trail', as
   await page.getByRole('button', {name: 'Publish'}).click();
   await expect(page.getByText('Review published. Public ratings have been updated.')).toBeVisible();
 });
+
+
+test('vendor can inspect inventory adjustment history and see the empty state', async ({ page }) => {
+  const response = (data: unknown) => ({ success: true, data, error: null, timestamp: '2026-11-09T10:00:00Z' });
+  await page.addInitScript(() => {
+    sessionStorage.setItem('markethub.access-token', 'test-vendor-token');
+    sessionStorage.setItem('markethub.session-user', JSON.stringify({
+      userId: 'vendor-123', email: 'vendor@example.test', role: 'VENDOR'
+    }));
+  });
+  await page.route('**/api/v1/vendor/products', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify(response([]))
+  }));
+  await page.route('**/api/v1/vendor/inventory', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify(response([{
+      productId: 'product-1', productName: 'Desk Lamp', onHandQuantity: 8,
+      reservedQuantity: 2, availableQuantity: 6, version: 3, updatedAt: '2026-11-08T10:00:00Z'
+    }]))
+  }));
+  await page.route('**/api/v1/vendor/orders?**', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify(response({ orders: [], limit: 20, offset: 0, hasMore: false }))
+  }));
+  await page.route('**/api/v1/vendor/analytics?**', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify(response({ from: '2026-10-11', to: '2026-11-09', currencies: [], daily: [], topProducts: [] }))
+  }));
+  let historyRequests = 0;
+  await page.route('**/api/v1/vendor/inventory/product-1/adjustments', route => {
+    historyRequests += 1;
+    return route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(response([]))
+    });
+  });
+
+  await page.goto('/vendor');
+  await expect(page.getByRole('heading', { name: 'Your store, in motion.' })).toBeVisible();
+  await page.getByRole('button', { name: /Inventory/ }).click();
+  await expect(page.getByRole('cell', { name: 'Desk Lamp' })).toBeVisible();
+  await page.getByRole('button', { name: 'View history' }).click();
+  await expect(page.getByRole('heading', { name: 'Adjustment history · Desk Lamp' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No adjustments recorded.' })).toBeVisible();
+  expect(historyRequests).toBe(1);
+});

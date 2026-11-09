@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorStoreProfileComponent } from './vendor-store-profile.component';
-import { VendorAnalytics, VendorAnalyticsDaily, VendorInventory, VendorOrder, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
+import { InventoryAdjustment, VendorAnalytics, VendorAnalyticsDaily, VendorInventory, VendorOrder, VendorProduct, VendorProductRequest, VendorService } from '../../core/vendor/vendor.service';
 
 type VendorTab = 'overview' | 'analytics' | 'products' | 'inventory' | 'orders' | 'store';
 
@@ -39,6 +39,10 @@ export class VendorPortalPageComponent {
   readonly editingProduct = signal<VendorProduct | null>(null);
 
   readonly adjustmentTarget = signal<VendorInventory | null>(null);
+  readonly historyTarget = signal<VendorInventory | null>(null);
+  readonly adjustmentHistory = signal<InventoryAdjustment[]>([]);
+  readonly historyLoading = signal(false);
+  readonly historyError = signal('');
   quantityDelta = 1;
   adjustmentReason = 'RESTOCK';
 
@@ -174,6 +178,50 @@ export class VendorPortalPageComponent {
     });
   }
 
+  viewAdjustmentHistory(item: VendorInventory): void {
+    this.historyTarget.set(item);
+    this.adjustmentHistory.set([]);
+    this.historyError.set('');
+    this.historyLoading.set(true);
+    this.api.adjustmentHistory(item.productId).subscribe({
+      next: response => {
+        if (this.historyTarget()?.productId !== item.productId) return;
+        this.adjustmentHistory.set(response.data);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        if (this.historyTarget()?.productId !== item.productId) return;
+        this.historyLoading.set(false);
+        this.historyError.set('Adjustment history could not be loaded. Try again.');
+      }
+    });
+  }
+
+  closeAdjustmentHistory(): void {
+    this.historyTarget.set(null);
+    this.historyError.set('');
+    this.historyLoading.set(false);
+  }
+
+  private reloadAdjustmentHistory(productId: string): void {
+    const target = this.historyTarget();
+    if (!target || target.productId !== productId) return;
+    this.historyLoading.set(true);
+    this.historyError.set('');
+    this.api.adjustmentHistory(productId).subscribe({
+      next: response => {
+        if (this.historyTarget()?.productId !== productId) return;
+        this.adjustmentHistory.set(response.data);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        if (this.historyTarget()?.productId !== productId) return;
+        this.historyLoading.set(false);
+        this.historyError.set('Adjustment history could not be refreshed. Try again.');
+      }
+    });
+  }
+
   openAdjustment(item: VendorInventory): void {
     this.adjustmentTarget.set(item);
     this.quantityDelta = 1;
@@ -190,6 +238,7 @@ export class VendorPortalPageComponent {
         this.adjustmentTarget.set(null);
         this.notice.set('Inventory adjustment saved.');
         this.reloadProductsAndInventory();
+        this.reloadAdjustmentHistory(target.productId);
       },
       error: () => { this.busy.set(false); this.error.set('Inventory changed or the adjustment would use reserved stock. Reload and try again.'); this.reloadProductsAndInventory(); }
     });
