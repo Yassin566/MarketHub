@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -82,7 +83,7 @@ public class AdminProductController {
         return ApiResponse.ok(changeStatus(productId, principal.userId(), "ACTIVE", request.reason()));
     }
 
-    private ProductItem changeStatus(UUID id, UUID actor, String target, String reason) {
+    @Transactional\n    private ProductItem changeStatus(UUID id, UUID actor, String target, String reason) {
         return jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<ProductItem>) connection -> {
             try (var lock = connection.prepareStatement("SELECT status FROM products WHERE id=? FOR UPDATE")) {
                 lock.setObject(1,id);
