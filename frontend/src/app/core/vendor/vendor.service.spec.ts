@@ -50,6 +50,32 @@ describe('VendorService', () => {
     request.flush(response(null));
   });
 
+  it('loads the vendor store profile', () => {
+    service.storeProfile().subscribe();
+    const request = http.expectOne('/api/v1/vendor/store');
+    expect(request.request.method).toBe('GET');
+    request.flush(response({ id: 'store-1', vendorId: 'vendor-1', storeName: 'MarketHub Store', slug: 'markethub-store', description: null, logoUrl: null, supportEmail: null, supportPhone: null, createdAt: '', updatedAt: '' }));
+  });
+
+  it('creates and updates the store profile through the matching endpoint', () => {
+    const body = { storeName: 'MarketHub Store', slug: 'markethub-store', description: null, logoUrl: null, supportEmail: 'help@example.com', supportPhone: null };
+    service.saveStoreProfile(body, false).subscribe();
+    const create = http.expectOne('/api/v1/vendor/store');
+    expect(create.request.method).toBe('POST');
+    create.flush(response({ id: 'store-1', vendorId: 'vendor-1', ...body, createdAt: '', updatedAt: '' }));
+    service.saveStoreProfile(body, true).subscribe();
+    const update = http.expectOne('/api/v1/vendor/store');
+    expect(update.request.method).toBe('PUT');
+    update.flush(response({ id: 'store-1', vendorId: 'vendor-1', ...body, createdAt: '', updatedAt: '' }));
+  });
+
+  it('loads inventory adjustment history for a product', () => {
+    service.adjustmentHistory('product-3').subscribe();
+    const request = http.expectOne('/api/v1/vendor/inventory/product-3/adjustments');
+    expect(request.request.method).toBe('GET');
+    request.flush(response([]));
+  });
+
   it('loads vendor inventory', () => {
     service.inventory().subscribe();
     const request = http.expectOne('/api/v1/vendor/inventory');
