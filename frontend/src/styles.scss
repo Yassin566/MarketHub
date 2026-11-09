@@ -341,3 +341,331 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Role-screen responsive refinements */
+.customer-shell,
+.notification-shell,
+.vendor-shell,
+.admin-page {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.customer-heading,
+.notification-heading,
+.vendor-heading,
+.admin-heading,
+.vendor-section-heading,
+.panel-heading {
+  min-width: 0;
+}
+
+.order-card,
+.order-detail-card,
+.fulfilment-row,
+.notification-card,
+.vendor-order-card,
+.admin-page .panel {
+  min-width: 0;
+}
+
+.order-card h2,
+.order-card p,
+.order-detail-card,
+.fulfilment-row,
+.notification-content,
+.notification-content p,
+.vendor-order-card,
+.vendor-shipment,
+.admin-page td,
+.admin-page th {
+  overflow-wrap: anywhere;
+}
+
+.notification-meta {
+  flex-wrap: wrap;
+}
+
+.admin-page .table-wrap {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.admin-page table {
+  min-width: 680px;
+}
+
+.vendor-table-wrap {
+  max-width: 100%;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.vendor-tabs {
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+.application-dialog,
+.vendor-dialog,
+.resolution-dialog {
+  box-sizing: border-box;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 760px) {
+  .customer-shell,
+  .notification-shell,
+  .vendor-shell {
+    padding-top: 38px;
+    padding-bottom: 58px;
+  }
+
+  .customer-heading,
+  .notification-heading,
+  .vendor-heading,
+  .admin-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .customer-heading > a,
+  .vendor-heading > button,
+  .admin-heading > button {
+    align-self: flex-start;
+  }
+
+  .notification-tools {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .notification-tools > button {
+    flex: 1 1 auto;
+  }
+
+  .notification-card {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .notification-actions {
+    margin-left: auto;
+  }
+
+  .vendor-tabs {
+    margin-top: 20px;
+    margin-inline: -2px;
+    padding-bottom: 2px;
+  }
+
+  .vendor-tabs button {
+    min-height: 46px;
+    padding-inline: 13px;
+  }
+
+  .vendor-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .vendor-metric,
+  .vendor-panel,
+  .vendor-form-panel {
+    padding: 18px;
+  }
+
+  .vendor-overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vendor-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .admin-page {
+    padding: 34px 18px 56px;
+  }
+
+  .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 22px 0;
+  }
+
+  .admin-page .panel {
+    padding: 18px;
+  }
+
+  .admin-page .panel-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .admin-page .pagination {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .moderation-filters {
+    align-items: stretch;
+  }
+
+  .moderation-filters label,
+  .moderation-filters select {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 520px) {
+  .customer-shell,
+  .notification-shell,
+  .vendor-shell {
+    padding-inline: 16px;
+  }
+
+  .customer-heading h1,
+  .vendor-heading h1 {
+    letter-spacing: -1.8px;
+  }
+
+  .order-card {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .order-card-meta {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .order-detail-card {
+    padding: 17px;
+  }
+
+  .fulfilment-card {
+    padding: 17px;
+  }
+
+  .fulfilment-heading {
+    align-items: flex-start;
+  }
+
+  .fulfilment-row {
+    gap: 12px;
+  }
+
+  .notification-tools {
+    flex-direction: column;
+  }
+
+  .notification-filter {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .notification-filter button {
+    flex: 1 1 0;
+  }
+
+  .notification-card {
+    display: grid;
+    grid-template-columns: 10px minmax(0, 1fr);
+    column-gap: 11px;
+    row-gap: 10px;
+  }
+
+  .notification-content {
+    min-width: 0;
+  }
+
+  .notification-content p {
+    overflow-wrap: anywhere;
+  }
+
+  .notification-actions {
+    grid-column: 2;
+    justify-self: end;
+    margin: 0;
+  }
+
+  .notification-pagination,
+  .vendor-order-pagination,
+  .vendor-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .notification-pagination > div,
+  .vendor-order-pagination > div,
+  .vendor-pagination > div {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .notification-pagination button,
+  .vendor-order-pagination button,
+  .vendor-pagination button {
+    flex: 1 1 0;
+    min-height: 42px;
+  }
+
+  .vendor-metrics,
+  .admin-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .vendor-metric strong {
+    font-size: 32px;
+  }
+
+  .vendor-order-lines > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .vendor-order-history > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .admin-page {
+    padding-inline: 14px;
+  }
+
+  .admin-page .panel {
+    padding: 15px;
+  }
+
+  .admin-page .stat-card {
+    padding: 17px;
+  }
+
+  .admin-page .moderation-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card:hover {
+    transform: none;
+  }
+}
