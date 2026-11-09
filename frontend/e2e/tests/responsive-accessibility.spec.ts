@@ -43,7 +43,7 @@ test.describe('shared responsive and accessible shell', () => {
         }));
         expect(dimensions.document, `${route} overflow at ${width}px`).toBeLessThanOrEqual(dimensions.viewport);
         await expect(page.getByLabel('Email address')).toBeVisible();
-        await expect(page.getByLabel('Password')).toBeVisible();
+        await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
       }
     }
   });
