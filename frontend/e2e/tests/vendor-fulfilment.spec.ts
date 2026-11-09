@@ -72,7 +72,7 @@ test.describe('vendor fulfilment lifecycle', () => {
     await openVendorOrders(page);
     await expect(page.getByText('Desk Lamp')).toBeVisible();
     await page.getByRole('button', { name: 'Start processing' }).click();
-    await expect(page.getByRole('status')).toContainText('Order moved to processing');
+    await expect(page.locator('.vendor-notice')).toContainText('Order moved to processing');
     expect(statusRequest).toEqual({
       status: 'PROCESSING', note: 'Vendor accepted order and started processing.',
     });
@@ -84,7 +84,7 @@ test.describe('vendor fulfilment lifecycle', () => {
     await page.getByLabel('Estimated delivery').fill('2026-11-12');
     await page.getByRole('button', { name: 'Confirm dispatch' }).click();
 
-    await expect(page.getByRole('status')).toContainText('Shipment recorded and order marked fulfilled');
+    await expect(page.locator('.vendor-notice')).toContainText('Shipment recorded and order marked fulfilled');
     expect(shipmentRequest).toEqual({
       carrier: 'Tunis Express',
       trackingNumber: 'TN-TRACK-42',
@@ -156,7 +156,7 @@ test.describe('vendor fulfilment lifecycle', () => {
     await expect(page.getByLabel('Tracking number')).toHaveValue('TN-TRACK-42');
     await page.getByRole('button', { name: 'Confirm dispatch' }).click();
 
-    await expect(page.getByRole('status')).toContainText('Shipment recorded and order marked fulfilled');
+    await expect(page.locator('.vendor-notice')).toContainText('Shipment recorded and order marked fulfilled');
     expect(attempts).toBe(2);
     await expect(page.locator('.vendor-order-card .status-pill')).toHaveText('FULFILLED');
   });

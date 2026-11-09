@@ -47,7 +47,7 @@ test.describe('customer payment recovery and order notifications', () => {
     await expect(page).toHaveURL(new RegExp(`/orders/${order.id}$`));
     await expect(page.getByRole('heading', { name: 'Order details.' })).toBeVisible();
     await expect(page.getByText('Travel Mug')).toBeVisible();
-    await expect(page.getByText('Payment request')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Payment request' })).toBeVisible();
     await expect(page.getByText('Northstar Goods')).toBeVisible();
     await expect(page.getByText('Awaiting dispatch. Tracking details will appear here when this vendor ships your items.')).toBeVisible();
   });
