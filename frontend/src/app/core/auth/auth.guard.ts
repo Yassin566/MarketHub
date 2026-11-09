@@ -19,7 +19,7 @@ export const guestGuard:CanActivateFn=()=>{
   return auth.isAuthenticated()?inject(Router).parseUrl(roleHome(auth.user()?.role)) : true;
 };
 
-export const roleGuard=(roles:string[]):CanActivateFn=()=>{
+export const roleGuard=(roles:string[]):CanActivateFn=>()=>{
   const auth=inject(AuthService),user=auth.user();
   if(!auth.isAuthenticated()) return inject(Router).createUrlTree(['/login']);
   return user&&roles.includes(user.role)?true:inject(Router).parseUrl(roleHome(user?.role));
