@@ -1,0 +1,32 @@
+<section class="notification-shell">
+  <div class="notification-heading">
+    <div><span class="eyebrow">YOUR ACCOUNT</span><h1>Notifications.</h1><p>Important updates about payments, orders and deliveries.</p></div>
+    <div class="notification-tools">
+      <div class="notification-filter" aria-label="Notification filter">
+        <button type="button" [attr.aria-pressed]="!unreadOnly()" (click)="setFilter(false)">All</button>
+        <button type="button" [attr.aria-pressed]="unreadOnly()" (click)="setFilter(true)">Unread @if(unreadCount()>0){({{unreadCount()}})}</button>
+      </div>
+      <button class="secondary-button" type="button" [disabled]="unreadCount()===0" (click)="markAllRead()">Mark all as read</button>
+    </div>
+  </div>
+  @if(error()){<div class="error-banner" role="alert">{{error()}}</div>}
+  @if(loading()){<div class="notification-state" role="status">Loading your notifications...</div>}
+  @else if(!notifications().length){<div class="notification-state"><h2>{{unreadOnly()?'You are all caught up.':'No notifications yet.'}}</h2><p>{{unreadOnly()?'There are no unread updates.':'We will let you know when something changes with your orders.'}}</p></div>}
+  @else{
+    <div class="notification-list">
+      @for(item of notifications();track item.id){
+        <article class="notification-card" [class.unread]="!item.readAt">
+          <span class="notification-indicator" [class.read]="!!item.readAt" aria-hidden="true"></span>
+          <div class="notification-content">
+            <h2>{{item.title}}</h2><p>{{item.message}}</p>
+            <div class="notification-meta"><time [attr.datetime]="item.createdAt">{{item.createdAt|date:'medium'}}</time>
+              @if(item.orderId){<a class="notification-order" [routerLink]="['/orders',item.orderId]">View order</a>}
+            </div>
+          </div>
+          @if(!item.readAt){<div class="notification-actions"><button type="button" (click)="markRead(item)">Mark read</button></div>}
+        </article>
+      }
+    </div>
+    <div class="notification-pagination"><span>Showing {{offset()+1}}–{{offset()+notifications().length}}</span><div><button type="button" [disabled]="offset()===0" (click)="previous()">Previous</button> <button type="button" [disabled]="!hasMore()" (click)="next()">Next</button></div></div>
+  }
+</section>

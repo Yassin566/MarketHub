@@ -1,3 +1,3 @@
-import {Component,inject} from '@angular/core'; import {RouterLink,RouterOutlet} from '@angular/router'; import {AuthService} from './core/auth/auth.service';
+import {Component,effect,inject} from '@angular/core'; import {RouterLink,RouterOutlet} from '@angular/router'; import {AuthService} from './core/auth/auth.service'; import {CustomerService} from './core/customer/customer.service';
 @Component({selector:'mh-root',standalone:true,imports:[RouterLink,RouterOutlet],templateUrl: './app.component.html'})
-export class AppComponent{readonly auth=inject(AuthService);logout():void{this.auth.logout();}}
+export class AppComponent{readonly auth=inject(AuthService);readonly customer=inject(CustomerService);constructor(){effect(onCleanup=>{if(this.auth.user()?.role!=='CUSTOMER'){this.customer.unreadCount.set(0);return;}const sub=this.customer.notifications(1,0).subscribe({next:r=>this.customer.unreadCount.set(r.data.unreadCount),error:()=>this.customer.unreadCount.set(0)});onCleanup(()=>sub.unsubscribe());});}logout():void{this.auth.logout();}}
