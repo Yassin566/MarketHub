@@ -215,7 +215,7 @@ class AdminPaymentResolutionHttpSecurityTest {
                                  "evidenceReference":"provider-case-unauthenticated",
                                  "reason":"Should not be accepted"}
                                 """))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
         assertThat(jdbc.queryForObject("select status from payments where id=?", String.class, payment.id()))
                 .isEqualTo("REQUIRES_REVIEW");
