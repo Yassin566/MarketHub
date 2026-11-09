@@ -9,7 +9,7 @@
       @if(paymentStatus()==='retry'||!paymentStatus()){<p class="muted">The payment request could not be confirmed. Retry using the same idempotency key to avoid creating a duplicate attempt.</p>}
       @else{<p class="muted">Payment request status: <strong>{{paymentStatus()}}</strong>. Payment confirmation is asynchronous and is not inferred from this page.</p>}
       @if(paymentError()){<p class="error-banner" role="alert">{{paymentError()}}</p>}
-      <button class="primary-button" type="button" (click)="retryPayment()" [disabled]="retryingPayment()">{{retryingPayment()?'Retrying...':'Retry sandbox payment request'}}</button>
+      @if(paymentStatus()==='retry'||!paymentStatus()){<button class="primary-button" type="button" (click)="retryPayment()" [disabled]="retryingPayment()">{{retryingPayment()?'Retrying...':'Retry sandbox payment request'}}</button>}
       <p class="fine-print">Sandbox only. Do not make a second payment outside MarketHub. Your order remains pending until a verified provider event updates it.</p>
     </div>
   }@else{
