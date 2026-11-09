@@ -29,13 +29,14 @@ export class CartPageComponent {
     const quantity=Number((event.target as HTMLInputElement).value);
     if(!Number.isInteger(quantity)||quantity<1||quantity>1000){
       this.error.set('Quantity must be a whole number between 1 and 1000.');
-      this.load();
+      const previous=this.cart()?.items.find(item=>item.productId===productId)?.quantity;
+      (event.target as HTMLInputElement).value=String(previous??1);
       return;
     }
     this.busy.set(true);this.busyProduct.set(productId);this.error.set('');this.notice.set('');
     this.api.putItem(productId,quantity).subscribe({
       next:r=>{this.cart.set(r.data);this.busy.set(false);this.busyProduct.set('');this.notice.set('Cart quantity updated.');},
-      error:()=>{this.busy.set(false);this.busyProduct.set('');this.error.set('The quantity could not be updated. Your cart has been refreshed.');this.load();}
+      error:()=>{this.busy.set(false);this.busyProduct.set('');this.error.set('The quantity could not be updated. Your existing cart is unchanged. Please try again.');}
     });
   }
 
@@ -53,7 +54,7 @@ export class CartPageComponent {
       next:r=>{
         this.busy.set(false);
         if(r.data.valid) this.router.navigate(['/checkout']);
-        else {this.error.set(r.data.issues.join(' · ')||'Please review your cart.');this.load();}
+        else {this.error.set(r.data.issues.join(' · ')||'Please review your cart.');}
       },
       error:()=>{this.busy.set(false);this.error.set('Checkout validation is temporarily unavailable. Your cart is unchanged; try again.');}
     });
