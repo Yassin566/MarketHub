@@ -6,6 +6,7 @@ export const routes:Routes=[
  {path:'products/:slug',loadComponent:()=>import('./features/catalog/product-detail-page.component').then(m=>m.ProductDetailPageComponent)},
  {path:'cart',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/cart-page.component').then(m=>m.CartPageComponent)},
  {path:'checkout',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/checkout-page.component').then(m=>m.CheckoutPageComponent)},
+ {path:'notifications',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/notifications-page.component').then(m=>m.NotificationsPageComponent)},
  {path:'orders',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/orders-page.component').then(m=>m.OrdersPageComponent)},
  {path:'orders/:id',canActivate:[authGuard,roleGuard(['CUSTOMER'])],loadComponent:()=>import('./features/customer/order-detail-page.component').then(m=>m.OrderDetailPageComponent)},
  {path:'login',canActivate:[guestGuard],data:{mode:'login'},loadComponent:()=>import('./features/auth/auth-page.component').then(m=>m.AuthPageComponent)},
