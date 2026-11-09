@@ -126,9 +126,30 @@
       <div class="vendor-section-heading"><div><span class="eyebrow">STOCK CONTROL</span><h2>Inventory</h2><p>Available stock excludes quantities reserved for customer orders.</p></div></div>
       <div class="vendor-table-wrap"><table class="vendor-table"><thead><tr><th>Product</th><th>On hand</th><th>Reserved</th><th>Available</th><th>Version</th><th></th></tr></thead><tbody>
         @for(item of inventory();track item.productId){
-          <tr><td><strong>{{item.productName}}</strong></td><td>{{item.onHandQuantity}}</td><td>{{item.reservedQuantity}}</td><td><span [class.low-stock]="item.availableQuantity<=5">{{item.availableQuantity}}</span></td><td>{{item.version}}</td><td><button class="table-action" type="button" (click)="openAdjustment(item)">Adjust stock</button></td></tr>
+          <tr><td><strong>{{item.productName}}</strong></td><td>{{item.onHandQuantity}}</td><td>{{item.reservedQuantity}}</td><td><span [class.low-stock]="item.availableQuantity<=5">{{item.availableQuantity}}</span></td><td>{{item.version}}</td><td class="vendor-row-actions"><button class="table-action" type="button" (click)="openAdjustment(item)">Adjust stock</button><button class="table-action" type="button" (click)="viewAdjustmentHistory(item)">View history</button></td></tr>
         }@empty{<tr><td colspan="6" class="vendor-empty-cell">Inventory will appear when you add products.</td></tr>}
       </tbody></table></div>
+      @if(historyTarget();as historyItem){
+        <section class="vendor-form-panel adjustment-history-panel" aria-labelledby="adjustment-history-title">
+          <div class="vendor-section-heading">
+            <div><span class="eyebrow">INVENTORY AUDIT TRAIL</span><h3 id="adjustment-history-title">Adjustment history · {{historyItem.productName}}</h3><p>Recorded stock changes, newest first.</p></div>
+            <button class="text-button" type="button" (click)="closeAdjustmentHistory()">Close history</button>
+          </div>
+          @if(historyLoading()){<p class="catalog-state" role="status">Loading adjustment history...</p>}
+          @else if(historyError()){<div class="vendor-alert" role="alert">{{historyError()}} <button class="text-button" type="button" (click)="viewAdjustmentHistory(historyItem)">Retry</button></div>}
+          @else if(adjustmentHistory().length===0){<div class="customer-empty"><h2>No adjustments recorded.</h2><p>Stock changes for this product will appear here.</p></div>}
+          @else{
+            <div class="vendor-table-wrap adjustment-history-table"><table class="vendor-table">
+              <thead><tr><th>Date and time</th><th>Change</th><th>Before</th><th>After</th><th>Reason</th><th>Version</th></tr></thead>
+              <tbody>
+                @for(entry of adjustmentHistory();track entry.id){
+                  <tr><td>{{entry.createdAt|date:'medium'}}</td><td><strong [class.low-stock]="entry.quantityDelta<0">{{entry.quantityDelta>0?'+':''}}{{entry.quantityDelta}}</strong></td><td>{{entry.quantityBefore}}</td><td>{{entry.quantityAfter}}</td><td>{{entry.reason}}</td><td>{{entry.versionAfter}}</td></tr>
+                }
+              </tbody>
+            </table></div>
+          }
+        </section>
+      }
       @if(adjustmentTarget();as target){
         <div class="vendor-form-panel adjustment-panel"><div class="vendor-section-heading"><div><span class="eyebrow">AUDITED STOCK CHANGE</span><h3>{{target.productName}}</h3><p>Current on-hand: {{target.onHandQuantity}} · Reserved: {{target.reservedQuantity}} · Available: {{target.availableQuantity}}</p></div><button class="text-button" type="button" (click)="adjustmentTarget.set(null)">Close</button></div>
           <form class="vendor-inline-form" (ngSubmit)="applyAdjustment()"><label>Quantity change<input name="quantityDelta" type="number" [(ngModel)]="quantityDelta" required step="1" /></label><label>Reason<select name="adjustmentReason" [(ngModel)]="adjustmentReason"><option value="RESTOCK">Restock</option><option value="CORRECTION">Correction</option><option value="DAMAGE">Damage</option><option value="RETURN">Return</option></select></label><button class="primary-button" type="submit" [disabled]="busy()||!quantityDelta">{{busy()?'Saving...':'Save adjustment'}}</button></form>
