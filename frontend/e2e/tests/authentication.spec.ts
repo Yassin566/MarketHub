@@ -9,7 +9,7 @@ test.describe('authentication and session experience',()=>{
   await page.goto('/orders');
   await expect(page).toHaveURL(/\/login\?returnUrl=%2Forders/);
   await page.getByLabel('Email address').fill('buyer@example.test');
-  await page.getByLabel('Password').fill('password123456');
+  await page.getByRole('textbox',{name:'Password'}).fill('password123456');
   await page.getByRole('button',{name:'Sign in'}).click();
   await expect(page).toHaveURL(/\/orders$/);
   await expect(page.getByText('buyer@example.test')).toBeVisible();
@@ -19,7 +19,7 @@ test.describe('authentication and session experience',()=>{
   await page.route('**/api/v1/auth/login',route=>route.fulfill({json:envelope(vendor)}));
   await page.goto('/login');
   await page.getByLabel('Email address').fill('seller@example.test');
-  await page.getByLabel('Password').fill('password123456');
+  await page.getByRole('textbox',{name:'Password'}).fill('password123456');
   await page.getByRole('button',{name:'Sign in'}).click();
   await expect(page).toHaveURL(/\/vendor$/);
  });
@@ -27,7 +27,7 @@ test.describe('authentication and session experience',()=>{
  test('supports password visibility and reports authentication failures accessibly',async({page})=>{
   await page.route('**/api/v1/auth/login',route=>route.fulfill({status:401,json:{success:false,data:null,error:{message:'Invalid credentials'}}}));
   await page.goto('/login');
-  const password=page.getByLabel('Password');
+  const password=page.getByRole('textbox',{name:'Password'});
   await password.fill('password123456');
   await page.getByRole('button',{name:'Show password'}).click();
   await expect(password).toHaveAttribute('type','text');

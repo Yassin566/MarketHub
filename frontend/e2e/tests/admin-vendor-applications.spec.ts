@@ -87,5 +87,5 @@ test('vendor applications show a retry state when the API is unavailable', async
 test('non-admin users cannot access vendor application review', async ({ page }) => {
   await signInAs(page, 'CUSTOMER');
   await page.goto('/admin');
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/account');
 });
