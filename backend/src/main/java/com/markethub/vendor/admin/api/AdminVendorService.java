@@ -1,5 +1,8 @@
 package com.markethub.vendor.admin.api;
 import com.markethub.common.exception.ResourceNotFoundException;
+import com.markethub.identity.domain.AppUser;
+import com.markethub.identity.domain.UserRole;
+import com.markethub.identity.repository.AppUserRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -8,12 +11,13 @@ import java.util.*;
 
 @Service public class AdminVendorService {
  private final JdbcTemplate jdbc;
- public AdminVendorService(JdbcTemplate jdbc){this.jdbc=jdbc;}
+ private final AppUserRepository users;
+ public AdminVendorService(JdbcTemplate jdbc,AppUserRepository users){this.jdbc=jdbc;this.users=users;}
  public record ApplicationView(UUID vendorId,UUID ownerUserId,String displayName,String status,Instant createdAt,String rejectionReason){}
  public record VendorItem(UUID vendorId,UUID ownerUserId,String ownerEmail,String displayName,String status,Instant createdAt,String storeName,String storeSlug,String supportEmail,String lastActorEmail,String lastReason,Instant lastActionAt){}
  public record VendorPage(List<VendorItem> items,long total,int limit,int offset){}
  public List<ApplicationView> pending(){return jdbc.query("select id,owner_user_id,display_name,status,created_at,rejection_reason from vendors where status='PENDING' order by created_at",(rs,n)->new ApplicationView(rs.getObject("id",UUID.class),rs.getObject("owner_user_id",UUID.class),rs.getString("display_name"),rs.getString("status"),rs.getTimestamp("created_at").toInstant(),rs.getString("rejection_reason")));}
- @Transactional public ApplicationView approve(UUID id,UUID actor){ApplicationView app=requirePending(id);int changed=jdbc.update("update vendors set status='APPROVED',reviewed_at=now(),reviewed_by=?,rejection_reason=null where id=? and status='PENDING'",actor,id);if(changed!=1)throw new IllegalStateException("Vendor application was concurrently reviewed");jdbc.update("update app_users set role='VENDOR',updated_at=now() where id=? and role in ('CUSTOMER','VENDOR')",app.ownerUserId());return findApplication(id);}
+ @Transactional public ApplicationView approve(UUID id,UUID actor){ApplicationView app=requirePending(id);AppUser owner=users.findById(app.ownerUserId()).orElseThrow(()->new IllegalStateException("Vendor owner account was not found"));if(owner.getRole()!=UserRole.CUSTOMER&&owner.getRole()!=UserRole.VENDOR)throw new IllegalStateException("Owner account is not eligible for vendor approval");owner.activateVendorRole();users.save(owner);int changed=jdbc.update("update vendors set status='APPROVED',reviewed_at=now(),reviewed_by=?,rejection_reason=null where id=? and status='PENDING'",actor,id);if(changed!=1)throw new IllegalStateException("Vendor application was concurrently reviewed");return findApplication(id);}
  @Transactional public ApplicationView reject(UUID id,UUID actor,String reason){requirePending(id);int changed=jdbc.update("update vendors set status='REJECTED',reviewed_at=now(),reviewed_by=?,rejection_reason=? where id=? and status='PENDING'",actor,reason.trim(),id);if(changed!=1)throw new IllegalStateException("Vendor application was concurrently reviewed");return findApplication(id);}
  public VendorPage vendors(String status,String search,int limit,int offset){
   if(limit<1||limit>100||offset<0)throw new IllegalArgumentException("Invalid pagination");
