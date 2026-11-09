@@ -30,7 +30,12 @@ test.describe('customer account dashboard and order history',()=>{
  });
 });
 
-test('shows vendor shipment progress, dispatch time and a safe carrier tracking link',async({page})=>{
+test.describe('customer shipment tracking',()=>{
+ test.beforeEach(async({page})=>page.addInitScript(()=>{
+  sessionStorage.setItem('markethub.access-token','test-customer-token');
+  sessionStorage.setItem('markethub.session-user',JSON.stringify({userId:'customer-1',email:'customer@example.test',role:'CUSTOMER'}));
+ }));
+ test('shows vendor shipment progress, dispatch time and a safe carrier tracking link',async({page})=>{
  await page.route('**/api/v1/customer/orders/order-abc123',route=>route.fulfill({json:envelope(order)}));
  await page.route('**/api/v1/customer/orders/order-abc123/fulfilments',route=>route.fulfill({json:envelope([{
   vendorOrderId:'vendor-order-1',vendorName:'Northstar Goods',status:'FULFILLED',
@@ -57,4 +62,5 @@ test('shows a retry action when fulfilment tracking cannot be loaded',async({pag
  await expect(page.getByRole('alert')).toContainText('Shipment details could not be loaded');
  await page.getByRole('button',{name:'Try again'}).click();
  await expect(page.getByText(/No fulfilment details are available yet/)).toBeVisible();
+});
 });
