@@ -32,6 +32,44 @@
     }
   </section>
 
+  <section class="panel">
+    <div class="panel-heading"><div><h2>Product review moderation</h2><p>Control public visibility. Unpublished reviews remain stored for audit and can be republished.</p></div><span class="count">{{ moderationTotal() }} reviews</span></div>
+    <div class="moderation-filters">
+      <label>Publication
+        <select [ngModel]="moderationPublishedFilter()" (ngModelChange)="moderationPublishedFilter.set($event); loadModeration()">
+          <option value="all">All reviews</option><option value="true">Published</option><option value="false">Unpublished</option>
+        </select>
+      </label>
+      <label>Rating
+        <select [ngModel]="moderationRatingFilter()" (ngModelChange)="moderationRatingFilter.set($event); loadModeration()">
+          <option value="all">All ratings</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option>
+        </select>
+      </label>
+      <button type="button" class="secondary-button" (click)="loadModeration()" [disabled]="moderationLoading()">Refresh reviews</button>
+    </div>
+    @if (moderationNotice()) { <div class="success-notice" role="status">{{ moderationNotice() }}</div> }
+    @if (moderationError()) { <div class="notice error" role="alert">{{ moderationError() }}</div> }
+    @if (moderationLoading()) { <div class="state" role="status">Loading product reviews…</div> }
+    @else if (!moderationError() && moderationItems().length === 0) { <div class="state empty"><strong>No reviews match these filters</strong><span>Try another publication state or rating.</span></div> }
+    @else {
+      <div class="table-wrap"><table>
+        <thead><tr><th>Product / review</th><th>Rating</th><th>Submitted</th><th>Visibility / audit</th><th>Action</th></tr></thead>
+        <tbody>@for (review of moderationItems(); track review.id) {
+          <tr>
+            <td><strong>{{ review.productName }}</strong><small>{{ review.reviewText || 'No written comment' }}</small></td>
+            <td>{{ review.rating }} / 5</td>
+            <td>{{ review.createdAt | date:'medium' }}</td>
+            <td><span class="status-pill">{{ review.published ? 'PUBLISHED' : 'UNPUBLISHED' }}</span>
+              @if (review.lastAction) { <small>{{ review.lastAction }} by {{ review.lastActorEmail || 'administrator' }} · {{ review.lastActionAt | date:'short' }}</small> }
+              @else { <small>No moderation changes recorded</small> }
+            </td>
+            <td><button type="button" class="resolve-button" (click)="setReviewPublication(review)" [disabled]="moderationBusyId() === review.id">{{ moderationBusyId() === review.id ? 'Saving…' : review.published ? 'Unpublish' : 'Publish' }}</button></td>
+          </tr>
+        }</tbody>
+      </table></div>
+    }
+  </section>
+
   <section class="panel reconciliation-panel">
     <div class="panel-heading"><div><h2>Payment reconciliation history</h2><p>Stale processing payments flagged for manual verification.</p></div><span class="count">{{ total() }} total</span></div>
     @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
