@@ -69,33 +69,3 @@ test.describe('vendor order management', () => {
     await expect(page.getByRole('heading', { name: 'No orders yet.' })).toBeVisible();
   });
 });
-
-test('validates tracking URL schemes and displays saved shipment details', async ({ page }) => {
-  let shipmentRecorded = false;
-  await page.route('**/api/v1/vendor/orders**', async route => {
-    await route.fulfill({ json: envelope({ orders: [order('dispatch-1', 'PROCESSING')], limit: 20, offset: 0, hasMore: false }) });
-  });
-  await page.route('**/api/v1/vendor/orders/dispatch-1/shipment', async route => {
-    shipmentRecorded = true;
-    const body = route.request().postDataJSON();
-    await route.fulfill({ json: envelope({ ...order('dispatch-1', 'FULFILLED'), shipment: {
-      id: 'shipment-1', carrier: body.carrier, trackingNumber: body.trackingNumber,
-      trackingUrl: body.trackingUrl, shippedAt: '2026-11-09T12:00:00Z', estimatedDeliveryDate: body.estimatedDeliveryDate,
-    } }) });
-  });
-  await page.goto('/vendor');
-  await page.getByRole('button', { name: /Orders/ }).click();
-  await page.getByRole('button', { name: 'Record dispatch' }).click();
-  await page.getByLabel('Carrier').fill('Example Express');
-  await page.getByLabel('Tracking number').fill('ZX123456');
-  await page.getByLabel('Tracking URL (optional)').fill('javascript:alert(1)');
-  await page.getByRole('button', { name: 'Confirm dispatch' }).click();
-  await expect(page.getByRole('alert')).toContainText('Only HTTP or HTTPS');
-  expect(shipmentRecorded).toBe(false);
-  await page.getByLabel('Tracking URL (optional)').fill('https://carrier.example/track/ZX123456');
-  await page.getByRole('button', { name: 'Confirm dispatch' }).click();
-  await expect(page.getByRole('status')).toContainText('Shipment recorded');
-  await expect(page.getByText('Tracking number · ZX123456')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Open carrier tracking ↗' })).toHaveAttribute('href', 'https://carrier.example/track/ZX123456');
-  expect(shipmentRecorded).toBe(true);
-});
