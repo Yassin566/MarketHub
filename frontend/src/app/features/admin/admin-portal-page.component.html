@@ -1,20 +1,42 @@
 <section class="admin-page">
   <div class="admin-heading">
-    <div><p class="eyebrow">MARKETHUB CONTROL CENTER</p><h1>Admin overview</h1><p class="subtitle">Monitor payment exceptions that need an operator's attention.</p></div>
-    <button type="button" class="refresh-button" (click)="load()" [disabled]="loading()">↻ Refresh</button>
+    <div><p class="eyebrow">MARKETHUB CONTROL CENTER</p><h1>Admin overview</h1><p class="subtitle">Monitor payment exceptions and resolve verified provider outcomes.</p></div>
+    <button type="button" class="refresh-button" (click)="load()" [disabled]="loading() || reviewLoading()">↻ Refresh</button>
   </div>
 
   <div class="admin-stats">
-    <article class="stat-card"><span>Payment review cases</span><strong>{{ total() }}</strong><small>Recorded reconciliation attempts</small></article>
-    <article class="stat-card"><span>Current page</span><strong>{{ currentPage() }} / {{ pageCount() }}</strong><small>20 records per page</small></article>
-    <article class="stat-card"><span>Operator guidance</span><strong>Verify first</strong><small>Never infer provider success from a timeout</small></article>
+    <article class="stat-card"><span>Payments requiring review</span><strong>{{ reviewTotal() }}</strong><small>Provider outcomes need manual verification</small></article>
+    <article class="stat-card"><span>Reconciliation records</span><strong>{{ total() }}</strong><small>Recorded reconciliation attempts</small></article>
+    <article class="stat-card"><span>Operator guidance</span><strong>Verify first</strong><small>A timeout is not proof of success or failure</small></article>
   </div>
 
   <section class="panel">
-    <div class="panel-heading"><div><h2>Payment reconciliation</h2><p>Stale processing payments flagged for manual verification.</p></div><span class="count">{{ total() }} total</span></div>
+    <div class="panel-heading"><div><h2>Payments requiring review</h2><p>Only payments in the review state can be resolved here.</p></div><span class="count">{{ reviewTotal() }} pending</span></div>
+    @if (reviewError()) { <div class="notice error" role="alert">{{ reviewError() }}</div> }
+    @if (reviewLoading()) { <div class="state" role="status">Loading payments requiring review…</div> }
+    @else if (!reviewError() && reviewPayments().length === 0) { <div class="state empty"><strong>No payments need resolution</strong><span>New review cases will appear here after reconciliation.</span></div> }
+    @else if (reviewPayments().length > 0) {
+      <div class="table-wrap"><table>
+        <thead><tr><th>Payment / order</th><th>Provider</th><th>Amount</th><th>Status</th><th>Updated</th><th>Action</th></tr></thead>
+        <tbody>@for (payment of reviewPayments(); track payment.paymentId) {
+          <tr>
+            <td><strong>{{ payment.paymentId.slice(0, 8) }}…</strong><small>Order {{ payment.orderId.slice(0, 8) }}…</small></td>
+            <td>{{ payment.providerCode }}<small>{{ payment.providerReference || 'No provider reference' }}</small></td>
+            <td>{{ payment.amount | number:'1.2-2' }} {{ payment.currency }}</td>
+            <td><span class="status-pill">{{ payment.status }}</span></td>
+            <td>{{ payment.updatedAt | date:'medium' }}</td>
+            <td><button type="button" class="resolve-button" (click)="openResolution(payment)">Review resolution</button></td>
+          </tr>
+        }</tbody>
+      </table></div>
+    }
+  </section>
+
+  <section class="panel reconciliation-panel">
+    <div class="panel-heading"><div><h2>Payment reconciliation history</h2><p>Stale processing payments flagged for manual verification.</p></div><span class="count">{{ total() }} total</span></div>
     @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
     @if (loading()) { <div class="state" role="status">Loading payment review history…</div> }
-    @else if (!error() && items().length === 0) { <div class="state empty"><strong>You're all caught up</strong><span>No payment reconciliation cases have been recorded.</span></div> }
+    @else if (!error() && items().length === 0) { <div class="state empty"><strong>No reconciliation attempts</strong><span>There are no recorded reconciliation cases.</span></div> }
     @else if (items().length > 0) {
       <div class="table-wrap"><table>
         <thead><tr><th>Payment / order</th><th>Provider</th><th>Outcome</th><th>Observed status</th><th>Flagged</th><th>Details</th></tr></thead>
@@ -34,3 +56,45 @@
   </section>
   <p class="compliance-note">A timeout is not proof of payment failure or success. Verify the transaction with the payment provider before taking any resolution action.</p>
 </section>
+
+@if (resolutionDialogOpen()) {
+  <div class="dialog-backdrop">
+    <section class="resolution-dialog" role="dialog" aria-modal="true" aria-labelledby="resolution-title">
+      <div class="dialog-heading"><div><p class="eyebrow">MANUAL PAYMENT REVIEW</p><h2 id="resolution-title">{{ resolution() ? 'Resolution recorded' : 'Resolve payment' }}</h2></div>
+        @if (!submitting()) { <button type="button" class="close-button" aria-label="Close dialog" (click)="closeResolution()">×</button> }
+      </div>
+      @if (resolution(); as audit) {
+        <div class="success-notice" role="status"><strong>Payment {{ audit.resultingPaymentStatus }}</strong><span>The resolution and audit record were saved.</span></div>
+        <dl class="audit-details">
+          <div><dt>Decision</dt><dd>{{ audit.decision }}</dd></div>
+          <div><dt>Administrator</dt><dd>{{ audit.actorEmail }}</dd></div>
+          <div><dt>Evidence reference</dt><dd>{{ audit.evidenceReference }}</dd></div>
+          <div><dt>Reason</dt><dd>{{ audit.reason }}</dd></div>
+          <div><dt>Recorded</dt><dd>{{ audit.createdAt | date:'medium' }}</dd></div>
+        </dl>
+        <button type="button" class="primary-button full-width" (click)="closeResolution()">Close</button>
+      } @else {
+        <div class="payment-context"><span>Payment</span><strong>{{ activePayment()?.paymentId }}</strong><small>{{ activePayment()?.amount | number:'1.2-2' }} {{ activePayment()?.currency }} · {{ activePayment()?.providerCode }}</small></div>
+        @if (resolutionError()) { <div class="notice error" role="alert">{{ resolutionError() }}</div> }
+        @if (!confirming()) {
+          <p class="dialog-help">Confirm the provider's final outcome before changing the payment and order state.</p>
+          <label for="resolution-decision">Verified provider outcome</label>
+          <select id="resolution-decision" [ngModel]="decision()" (ngModelChange)="decision.set($event)">
+            <option value="CONFIRM_SUCCEEDED">Provider confirms payment succeeded</option>
+            <option value="CONFIRM_FAILED">Provider confirms payment failed</option>
+          </select>
+          <label for="evidence-reference">Provider evidence reference</label>
+          <input id="evidence-reference" name="evidenceReference" maxlength="300" [ngModel]="evidenceReference()" (ngModelChange)="evidenceReference.set($event)" placeholder="Transaction ID or provider case reference">
+          <label for="resolution-reason">Reason for this decision</label>
+          <textarea id="resolution-reason" name="reason" rows="3" maxlength="500" [ngModel]="reason()" (ngModelChange)="reason.set($event)" placeholder="Describe what was verified with the provider"></textarea>
+          <p class="dialog-warning">This action changes payment, order, and inventory state and cannot be undone from this screen.</p>
+          <div class="dialog-actions"><button type="button" class="secondary-button" (click)="closeResolution()">Cancel</button><button type="button" class="primary-button" (click)="prepareConfirmation()">Review decision</button></div>
+        } @else {
+          <div class="confirmation-notice" role="alert"><strong>Confirm this irreversible action</strong><span>{{ decision() === 'CONFIRM_SUCCEEDED' ? 'The payment and order will be marked paid and reserved inventory consumed.' : 'The payment and order will be marked failed/cancelled and reserved inventory released.' }}</span></div>
+          <dl class="audit-details"><div><dt>Decision</dt><dd>{{ decision() }}</dd></div><div><dt>Evidence</dt><dd>{{ evidenceReference() }}</dd></div><div><dt>Reason</dt><dd>{{ reason() }}</dd></div></dl>
+          <div class="dialog-actions"><button type="button" class="secondary-button" (click)="backToForm()" [disabled]="submitting()">Back</button><button type="button" class="danger-button" (click)="applyResolution()" [disabled]="submitting()">{{ submitting() ? 'Applying…' : 'Confirm and apply' }}</button></div>
+        }
+      }
+    </section>
+  </div>
+}
