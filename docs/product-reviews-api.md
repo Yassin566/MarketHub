@@ -3,6 +3,7 @@
 ## Endpoints
 
 - `GET /api/v1/products/{productId}/reviews?limit=20&offset=0` — public paginated published reviews, average rating, and review count.
+- `GET /api/v1/customer/products/{productId}/reviews/mine` — returns the authenticated customer's review for the product, or `null` when they have not reviewed it yet.
 - `POST /api/v1/customer/products/{productId}/reviews` — customer creates a review.
 - `PUT /api/v1/customer/reviews/{reviewId}` — customer edits their own review.
 - `DELETE /api/v1/customer/reviews/{reviewId}` — customer deletes their own review.
@@ -20,6 +21,7 @@ A review can be created only if the authenticated customer owns an order contain
 - Page size is 1–100 and offset must be non-negative.
 - Public results contain published reviews only, newest first.
 - Update and delete operations scope the SQL statement to both review ID and authenticated customer ID.
-- The database unique constraint enforces one review per customer/product, including concurrent requests. Duplicate attempts are rejected by PostgreSQL's unique constraint.
+- The database unique constraint enforces one review per customer/product, including concurrent requests. Duplicate attempts are rejected by PostgreSQL's unique constraint and returned as HTTP `409 Conflict`.
+- The authenticated review lookup scopes the query to both product ID and customer ID; it never exposes another customer's review.
 
 The migration retains the purchase order reference and indexes the public product feed and customer history.

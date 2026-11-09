@@ -53,6 +53,24 @@ public class ProductReviewService {
                 stats.averageRating(), stats.reviewCount());
     }
 
+
+    @Transactional(readOnly = true)
+    public Review findOwned(UUID customerId, UUID productId) {
+        if (!productExists(productId)) throw new ResourceNotFoundException("Product not found");
+        List<Review> rows = jdbc.query("""
+                SELECT id, product_id, rating, review_text, created_at, updated_at
+                FROM product_reviews
+                WHERE product_id = ? AND customer_user_id = ?
+                ORDER BY created_at DESC, id DESC
+                LIMIT 1
+                """, (rs, row) -> new Review(
+                rs.getObject("id", UUID.class), rs.getObject("product_id", UUID.class),
+                rs.getInt("rating"), rs.getString("review_text"),
+                rs.getTimestamp("created_at").toInstant(),
+                rs.getTimestamp("updated_at").toInstant()), productId, customerId);
+        return rows.isEmpty() ? null : rows.getFirst();
+    }
+
     @Transactional
     public Review create(UUID customerId, UUID productId, int rating, String reviewText) {
         validateReview(rating, reviewText);

@@ -6,6 +6,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
 
@@ -57,5 +66,19 @@ class ProductReviewServiceTest {
         assertThatThrownBy(() -> reviews.listPublished(UUID.randomUUID(), 20, -1))
                 .isInstanceOf(IllegalArgumentException.class);
         verifyNoInteractions(jdbc);
+    }
+
+    @Test
+    void findOwnedScopesLookupToBothProductAndAuthenticatedCustomer() {
+        UUID customerId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        when(jdbc.queryForObject(anyString(), eq(Boolean.class), eq(productId))).thenReturn(true);
+        when(jdbc.query(anyString(), any(RowMapper.class), eq(productId), eq(customerId)))
+                .thenReturn(List.of());
+
+        org.assertj.core.api.Assertions.assertThat(reviews.findOwned(customerId, productId)).isNull();
+
+        verify(jdbc).query(org.mockito.ArgumentMatchers.contains("product_id = ? AND customer_user_id = ?"),
+                any(RowMapper.class), eq(productId), eq(customerId));
     }
 }

@@ -20,6 +20,7 @@ export interface ProductReviewPage{reviews:ProductReview[];limit:number;offset:n
 export class CustomerService{
  private http=inject(HttpClient);
  readonly unreadCount=signal(0);
+ myProductReview(productId:string):Observable<ApiResponse<ProductReview|null>>{return this.http.get<ApiResponse<ProductReview|null>>('/api/v1/customer/products/'+encodeURIComponent(productId)+'/reviews/mine');}
  productReviews(productId:string,limit=10,offset=0):Observable<ApiResponse<ProductReviewPage>>{const params=new HttpParams().set('limit',limit).set('offset',offset);return this.http.get<ApiResponse<ProductReviewPage>>('/api/v1/products/'+encodeURIComponent(productId)+'/reviews',{params});}
  createProductReview(productId:string,rating:number,reviewText:string):Observable<ApiResponse<ProductReview>>{return this.http.post<ApiResponse<ProductReview>>('/api/v1/customer/products/'+encodeURIComponent(productId)+'/reviews',{rating,reviewText});}
  updateProductReview(reviewId:string,rating:number,reviewText:string):Observable<ApiResponse<ProductReview>>{return this.http.put<ApiResponse<ProductReview>>('/api/v1/customer/reviews/'+encodeURIComponent(reviewId),{rating,reviewText});}

@@ -30,6 +30,14 @@ public class ProductReviewController {
         return ApiResponse.ok(reviews.listPublished(productId, limit, offset));
     }
 
+    @GetMapping("/api/v1/customer/products/{productId}/reviews/mine")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ApiResponse<ProductReviewService.Review> mine(
+            @AuthenticationPrincipal MarketHubPrincipal principal,
+            @PathVariable UUID productId) {
+        return ApiResponse.ok(reviews.findOwned(principal.userId(), productId));
+    }
+
     @PostMapping("/api/v1/customer/products/{productId}/reviews")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ApiResponse<ProductReviewService.Review> create(
