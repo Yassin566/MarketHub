@@ -16,6 +16,12 @@ interface PaymentReviewItem {
   status: string; amount: number; currency: string; createdAt: string; updatedAt: string;
 }
 interface PaymentPage {items: PaymentReviewItem[]; total: number; limit: number; offset: number;}
+interface ModerationReview {
+  id: string; productId: string; productName: string; rating: number; reviewText: string | null;
+  published: boolean; customerUserId: string; createdAt: string;
+  lastAction: string | null; lastActorEmail: string | null; lastActionAt: string | null;
+}
+interface ModerationPage {items: ModerationReview[]; total: number; limit: number; offset: number;}
 interface ResolutionView {
   id: string; paymentId: string; actorUserId: string; actorEmail: string; decision: string;
   previousPaymentStatus: string; resultingPaymentStatus: string;
@@ -50,10 +56,18 @@ export class AdminPortalPageComponent implements OnInit {
   readonly evidenceReference = signal('');
   readonly reason = signal('');
   readonly resolution = signal<ResolutionView | null>(null);
+  readonly moderationItems = signal<ModerationReview[]>([]);
+  readonly moderationTotal = signal(0);
+  readonly moderationLoading = signal(false);
+  readonly moderationError = signal('');
+  readonly moderationPublishedFilter = signal('all');
+  readonly moderationRatingFilter = signal('all');
+  readonly moderationBusyId = signal('');
+  readonly moderationNotice = signal('');
   readonly pageCount = () => Math.max(1, Math.ceil(this.total() / this.limit));
   readonly currentPage = () => Math.floor(this.offset() / this.limit) + 1;
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadModeration(); }
 
   load(): void {
     this.loadReconciliation();
