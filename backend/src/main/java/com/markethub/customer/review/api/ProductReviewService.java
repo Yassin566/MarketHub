@@ -20,7 +20,7 @@ public class ProductReviewService {
         this.jdbc = jdbc;
     }
 
-    public record Review(UUID id, UUID productId, UUID customerUserId, int rating,
+    public record Review(UUID id, UUID productId, int rating,
                          String reviewText, Instant createdAt, Instant updatedAt) {}
     public record ReviewPage(List<Review> reviews, int limit, int offset, boolean hasMore,
                              BigDecimal averageRating, long reviewCount) {}
@@ -31,14 +31,14 @@ public class ProductReviewService {
         if (!productExists(productId)) throw new ResourceNotFoundException("Product not found");
 
         List<Review> rows = jdbc.query("""
-                SELECT id, product_id, customer_user_id, rating, review_text, created_at, updated_at
+                SELECT id, product_id, rating, review_text, created_at, updated_at
                 FROM product_reviews
                 WHERE product_id = ? AND is_published = TRUE
                 ORDER BY created_at DESC, id DESC
                 LIMIT ? OFFSET ?
                 """, (rs, row) -> new Review(
                 rs.getObject("id", UUID.class), rs.getObject("product_id", UUID.class),
-                rs.getObject("customer_user_id", UUID.class), rs.getInt("rating"),
+                rs.getInt("rating"),
                 rs.getString("review_text"), rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("updated_at").toInstant()), productId, limit + 1, offset);
 
