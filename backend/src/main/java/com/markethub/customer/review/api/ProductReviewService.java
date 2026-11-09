@@ -101,11 +101,11 @@ public class ProductReviewService {
 
     private Review loadOwned(UUID customerId, UUID id) {
         List<Review> rows = jdbc.query("""
-                SELECT id, product_id, customer_user_id, rating, review_text, created_at, updated_at
+                SELECT id, product_id, rating, review_text, created_at, updated_at
                 FROM product_reviews WHERE id = ? AND customer_user_id = ?
                 """, (rs, row) -> new Review(
                 rs.getObject("id", UUID.class), rs.getObject("product_id", UUID.class),
-                rs.getObject("customer_user_id", UUID.class), rs.getInt("rating"),
+                rs.getInt("rating"),
                 rs.getString("review_text"), rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("updated_at").toInstant()), id, customerId);
         if (rows.isEmpty()) throw new ResourceNotFoundException("Review not found");
