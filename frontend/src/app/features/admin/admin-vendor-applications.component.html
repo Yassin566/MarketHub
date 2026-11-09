@@ -1,0 +1,79 @@
+<section class="panel vendor-applications" aria-labelledby="vendor-applications-title">
+  <div class="panel-heading">
+    <div>
+      <h2 id="vendor-applications-title">Vendor applications</h2>
+      <p>Review businesses requesting access to sell on MarketHub.</p>
+    </div>
+    <div class="application-actions">
+      <span class="count" aria-live="polite">{{ applications().length }} pending</span>
+      <button type="button" class="secondary-button" (click)="load()" [disabled]="loading()">Refresh</button>
+    </div>
+  </div>
+
+  @if (notice()) { <div class="application-success" role="status">{{ notice() }}</div> }
+  @if (error()) {
+    <div class="application-error" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" class="secondary-button" (click)="load()" [disabled]="loading()">Retry</button>
+    </div>
+  }
+  @if (loading()) {
+    <div class="application-state" role="status">Loading vendor applications…</div>
+  } @else if (!error() && applications().length === 0) {
+    <div class="application-state application-empty">
+      <strong>No pending vendor applications</strong>
+      <span>New applications will appear here when vendors apply.</span>
+    </div>
+  } @else if (applications().length > 0) {
+    <div class="application-list">
+      @for (application of applications(); track application.vendorId) {
+        <article class="application-row">
+          <div class="application-info">
+            <div class="application-title">
+              <h3>{{ application.displayName }}</h3>
+              <span class="pending-label">Pending review</span>
+            </div>
+            <p>Submitted {{ application.createdAt | date:'medium' }}</p>
+            <small>Application {{ application.vendorId }}</small>
+          </div>
+          <div class="application-buttons">
+            <button type="button" class="application-reject" (click)="openReject(application)" [disabled]="!!busyId()">Reject</button>
+            <button type="button" class="application-approve" (click)="openApprove(application)" [disabled]="!!busyId()">Approve</button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
+
+@if (dialogMode(); as mode) {
+  <div class="application-backdrop">
+    <section class="application-dialog" role="dialog" aria-modal="true" aria-labelledby="application-dialog-title">
+      <div class="application-dialog-heading">
+        <div>
+          <p class="eyebrow">VENDOR APPLICATION REVIEW</p>
+          <h2 id="application-dialog-title">{{ mode === 'approve' ? 'Approve vendor?' : 'Reject vendor application?' }}</h2>
+        </div>
+        <button type="button" class="application-close" aria-label="Close dialog" (click)="closeDialog()" [disabled]="!!busyId()">×</button>
+      </div>
+      <div class="application-context">
+        <span>Business name</span>
+        <strong>{{ selected()?.displayName }}</strong>
+      </div>
+      @if (validationError()) { <div class="application-error" role="alert">{{ validationError() }}</div> }
+      @if (mode === 'approve') {
+        <p class="application-explanation">Approving this application activates the vendor role for its owner account and changes the application status to approved.</p>
+      } @else {
+        <label for="vendor-rejection-reason">Reason for rejection <span>(required)</span></label>
+        <textarea id="vendor-rejection-reason" name="reason" rows="4" maxlength="500" [ngModel]="rejectionReason()" (ngModelChange)="rejectionReason.set($event)" placeholder="Explain why this application cannot be approved"></textarea>
+        <small class="character-count">{{ rejectionReason().length }}/500 characters</small>
+      }
+      <div class="application-dialog-actions">
+        <button type="button" class="secondary-button" (click)="closeDialog()" [disabled]="!!busyId()">Cancel</button>
+        <button type="button" [class.application-approve]="mode === 'approve'" [class.application-reject]="mode === 'reject'" (click)="submitDecision()" [disabled]="!!busyId()">
+          {{ busyId() ? 'Saving…' : mode === 'approve' ? 'Confirm approval' : 'Confirm rejection' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}
