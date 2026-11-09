@@ -75,7 +75,7 @@ test('admin can review and confirm a provider payment outcome with an audit reco
   await page.getByRole('button', { name: 'Confirm and apply' }).click();
 
   await expect(page.getByRole('heading', { name: 'Resolution recorded' })).toBeVisible();
-  await expect(page.getByText('e2e-admin@example.test')).toBeVisible();
+  await expect(page.getByRole('dialog').getByText('e2e-admin@example.test')).toBeVisible();
   await expect(page.getByText('provider-txn-e2e-55')).toBeVisible();
   expect(submittedBody).toEqual({
     decision: 'CONFIRM_SUCCEEDED',
