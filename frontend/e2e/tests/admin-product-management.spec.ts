@@ -37,5 +37,5 @@ test('admin can search products and deactivate with a recorded reason',async({pa
   await page.getByRole('button',{name:'Deactivate'}).click();
   await expect(page.getByText('Product deactivated and moderation history recorded.')).toBeVisible();
   expect(patchBody).toEqual({reason:'Policy review 123'});
-  await expect(page.getByText('INACTIVE')).toBeVisible();
+  await expect(page.getByText('INACTIVE',{exact:true})).toBeVisible();
 });
