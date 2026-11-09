@@ -1,4 +1,5 @@
 import {TestBed} from '@angular/core/testing';
+import {provideRouter} from '@angular/router';
 import {of, throwError} from 'rxjs';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {CatalogService} from '../../core/catalog/catalog.service';
@@ -16,7 +17,7 @@ describe('CatalogPageComponent', () => {
     catalog = {list: vi.fn().mockReturnValue(of({data: emptyPage}))};
     TestBed.configureTestingModule({
       imports: [CatalogPageComponent],
-      providers: [{provide: CatalogService, useValue: catalog}]
+      providers: [provideRouter([]), {provide: CatalogService, useValue: catalog}]
     });
   });
 
