@@ -10,6 +10,8 @@
     <article class="stat-card"><span>Operator guidance</span><strong>Verify first</strong><small>A timeout is not proof of success or failure</small></article>
   </div>
 
+  <mh-admin-product-management></mh-admin-product-management>
+
   <section class="panel">
     <div class="panel-heading"><div><h2>Payments requiring review</h2><p>Only payments in the review state can be resolved here.</p></div><span class="count">{{ reviewTotal() }} pending</span></div>
     @if (reviewError()) { <div class="notice error" role="alert">{{ reviewError() }}</div> }
