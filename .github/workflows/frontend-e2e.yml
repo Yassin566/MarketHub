@@ -28,6 +28,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
       - name: Install browser test dependencies
         working-directory: frontend/e2e
         run: npm install
