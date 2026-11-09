@@ -1,1 +1,22 @@
-<section class="customer-shell"><a class="back-link" routerLink="/orders">← Order history</a>@if(loading()){<div class="catalog-state">Loading order...</div>}@else if(error()){<div class="error-banner" role="alert">{{error()}}</div>}@else if(order();as o){<div class="customer-heading"><div><span class="eyebrow">ORDER {{o.id.slice(0,8)}}</span><h1>Order details.</h1><p>Placed {{o.createdAt|date:'medium'}}</p></div><span class="status-pill">{{o.status}}</span></div><div class="order-detail-card"><h2>Items</h2>@for(item of o.items;track item.productId){<div class="checkout-line"><span>{{item.productName}} × {{item.quantity}}</span><strong>{{item.lineTotal|currency:item.currency}}</strong></div>}<div class="checkout-line total-line"><b>Total</b><strong>{{o.total|currency:o.currency}}</strong></div>@if(o.expiresAt){<p class="fine-print">Inventory reservation expiry: {{o.expiresAt|date:'medium'}}</p>}</div><div class="order-detail-card"><h2>Fulfilment & tracking</h2>@if(!fulfilments().length){<p class="muted">No shipment information is available yet. Tracking appears after a vendor dispatches your order.</p>}@for(f of fulfilments();track f.vendorOrderId){<div class="fulfilment-row"><div><b>{{f.vendorName}}</b><p>{{f.status}}</p></div>@if(f.shipment;as s){<div><p>{{s.carrier}} · {{s.trackingNumber}}</p>@if(s.estimatedDeliveryDate){<p>Estimated delivery: {{s.estimatedDeliveryDate|date:'mediumDate'}}</p>}@if(s.trackingUrl){<a class="text-button" [href]="s.trackingUrl" target="_blank" rel="noopener noreferrer">Track shipment ↗</a>}</div>}@else{<span class="muted">Not dispatched</span>}</div>}</div><div class="order-detail-card"><h2>Payment</h2><p class="muted">Order payment is processed asynchronously through the configured sandbox provider. The order status above is authoritative; a browser redirect does not confirm payment.</p></div>}</section>
+<section class="customer-shell"><a class="back-link" routerLink="/orders">← Order history</a>
+@if(loading()){<div class="catalog-state">Loading order...</div>}
+@else if(error()){<div class="error-banner" role="alert">{{error()}}</div>}
+@else if(order();as o){
+  <div class="customer-heading"><div><span class="eyebrow">ORDER {{o.id.slice(0,8)}}</span><h1>Order details.</h1><p>Placed {{o.createdAt|date:'medium'}}</p></div><span class="status-pill">{{o.status}}</span></div>
+  <div class="order-detail-card"><h2>Items</h2>@for(item of o.items;track item.productId){<div class="checkout-line"><span>{{item.productName}} × {{item.quantity}}</span><strong>{{item.lineTotal|currency:item.currency}}</strong></div>}<div class="checkout-line total-line"><b>Total</b><strong>{{o.total|currency:o.currency}}</strong></div>@if(o.expiresAt){<p class="fine-print">Inventory reservation expiry: {{o.expiresAt|date:'medium'}}</p>}</div>
+  @if(o.status==='PENDING_PAYMENT'){
+    <div class="order-detail-card payment-recovery"><span class="eyebrow">SANDBOX PAYMENT</span><h2>Payment request</h2>
+      @if(paymentStatus()==='retry'||!paymentStatus()){<p class="muted">The payment request could not be confirmed. Retry using the same idempotency key to avoid creating a duplicate attempt.</p>}
+      @else{<p class="muted">Payment request status: <strong>{{paymentStatus()}}</strong>. Payment confirmation is asynchronous and is not inferred from this page.</p>}
+      @if(paymentError()){<p class="error-banner" role="alert">{{paymentError()}}</p>}
+      <button class="primary-button" type="button" (click)="retryPayment()" [disabled]="retryingPayment()">{{retryingPayment()?'Retrying...':'Retry sandbox payment request'}}</button>
+      <p class="fine-print">Sandbox only. Do not make a second payment outside MarketHub. Your order remains pending until a verified provider event updates it.</p>
+    </div>
+  }@else{
+    <div class="order-detail-card"><h2>Payment</h2><p class="muted">Order status: {{o.status}}. Payment outcomes are confirmed by the server after verified provider events, not by a browser redirect.</p></div>
+  }
+  <div class="order-detail-card"><h2>Fulfilment & tracking</h2>
+    @if(!fulfilments().length){<p class="muted">No shipment information is available yet. Tracking appears after a vendor dispatches your order.</p>}
+    @for(f of fulfilments();track f.vendorOrderId){<div class="fulfilment-row"><div><b>{{f.vendorName}}</b><p>{{f.status}}</p></div>@if(f.shipment;as s){<div><p>{{s.carrier}} · {{s.trackingNumber}}</p>@if(s.estimatedDeliveryDate){<p>Estimated delivery: {{s.estimatedDeliveryDate|date:'mediumDate'}}</p>}@if(s.trackingUrl){<a class="text-button" [href]="s.trackingUrl" target="_blank" rel="noopener noreferrer">Track shipment ↗</a>}</div>}@else{<span class="muted">Not dispatched</span>}</div>}
+  </div>
+}</section>
