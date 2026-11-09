@@ -16,6 +16,12 @@ interface PaymentReviewItem {
   status: string; amount: number; currency: string; createdAt: string; updatedAt: string;
 }
 interface PaymentPage {items: PaymentReviewItem[]; total: number; limit: number; offset: number;}
+interface ModerationReview {
+  id: string; productId: string; productName: string; rating: number; reviewText: string | null;
+  published: boolean; customerUserId: string; createdAt: string;
+  lastAction: string | null; lastActorEmail: string | null; lastActionAt: string | null;
+}
+interface ModerationPage {items: ModerationReview[]; total: number; limit: number; offset: number;}
 interface ResolutionView {
   id: string; paymentId: string; actorUserId: string; actorEmail: string; decision: string;
   previousPaymentStatus: string; resultingPaymentStatus: string;
@@ -50,10 +56,18 @@ export class AdminPortalPageComponent implements OnInit {
   readonly evidenceReference = signal('');
   readonly reason = signal('');
   readonly resolution = signal<ResolutionView | null>(null);
+  readonly moderationItems = signal<ModerationReview[]>([]);
+  readonly moderationTotal = signal(0);
+  readonly moderationLoading = signal(false);
+  readonly moderationError = signal('');
+  readonly moderationPublishedFilter = signal('all');
+  readonly moderationRatingFilter = signal('all');
+  readonly moderationBusyId = signal('');
+  readonly moderationNotice = signal('');
   readonly pageCount = () => Math.max(1, Math.ceil(this.total() / this.limit));
   readonly currentPage = () => Math.floor(this.offset() / this.limit) + 1;
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void { this.load(); this.loadModeration(); }
 
   load(): void {
     this.loadReconciliation();
@@ -151,6 +165,63 @@ export class AdminPortalPageComponent implements OnInit {
         this.resolutionError.set(error.status === 409
           ? 'This payment can no longer be resolved in its current state. Refresh the payment list.'
           : error.error?.error?.message || 'The payment resolution could not be applied. No further action was taken.');
+      }
+    });
+  }
+
+  loadModeration(): void {
+    this.moderationLoading.set(true);
+    this.moderationError.set('');
+    let params = new HttpParams().set('limit', 100).set('offset', 0);
+    const published = this.moderationPublishedFilter();
+    const rating = this.moderationRatingFilter();
+    if (published !== 'all') params = params.set('published', published);
+    if (rating !== 'all') params = params.set('rating', rating);
+    this.http.get<ApiResponse<ModerationPage>>(
+      `${environment.apiBaseUrl}/admin/reviews`, {params}
+    ).subscribe({
+      next: response => {
+        this.moderationItems.set(response.data?.items ?? []);
+        this.moderationTotal.set(response.data?.total ?? 0);
+        this.moderationLoading.set(false);
+      },
+      error: error => {
+        this.moderationError.set(error.error?.error?.message
+          || 'Could not load product reviews. Check your admin access and try again.');
+        this.moderationLoading.set(false);
+      }
+    });
+  }
+
+  setReviewPublication(review: ModerationReview): void {
+    if (this.moderationBusyId()) return;
+    const published = !review.published;
+    const action = published ? 'publish' : 'unpublish';
+    if (!globalThis.confirm(`Are you sure you want to ${action} this review?`)) return;
+    this.moderationBusyId.set(review.id);
+    this.moderationNotice.set('');
+    this.moderationError.set('');
+    this.http.patch<ApiResponse<ModerationReview>>(
+      `${environment.apiBaseUrl}/admin/reviews/${review.id}/publication`,
+      {published}
+    ).subscribe({
+      next: response => {
+        const updated = response.data;
+        if (updated) {
+          this.moderationItems.update(items => items.map(item => item.id === updated.id ? updated : item));
+        } else {
+          this.loadModeration();
+        }
+        this.moderationNotice.set(published
+          ? 'Review published. Public ratings have been updated.'
+          : 'Review unpublished. It is excluded from public reviews and ratings.');
+        this.moderationBusyId.set('');
+      },
+      error: error => {
+        this.moderationError.set(error.status === 404
+          ? 'This review no longer exists. Refresh the review list.'
+          : error.error?.error?.message || 'The review publication state could not be changed.');
+        this.moderationBusyId.set('');
       }
     });
   }

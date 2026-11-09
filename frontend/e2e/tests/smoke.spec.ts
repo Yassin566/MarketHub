@@ -123,3 +123,42 @@ test('catalogue cards show published review ratings and an unrated state', async
   await expect(ratedCard.getByText('2 reviews')).toBeVisible();
   await expect(newCard.getByText('No reviews yet')).toBeVisible();
 });
+
+test('admin can filter reviews and publish or unpublish with an audit trail', async ({ page }) => {
+  const review = {
+    id: 'review-1', productId: 'product-1', productName: 'Sample product',
+    rating: 2, reviewText: 'Arrived damaged', published: true,
+    customerUserId: 'customer-1', createdAt: '2026-11-01T10:00:00Z',
+    lastAction: null, lastActorEmail: null, lastActionAt: null
+  };
+  const response = (data: unknown) => ({success: true, data, error: null, timestamp: '2026-11-09T10:00:00Z'});
+  await page.addInitScript(() => {
+    sessionStorage.setItem('markethub.access-token', 'test-admin-token');
+    sessionStorage.setItem('markethub.session-user', JSON.stringify({
+      userId: 'admin-1', email: 'admin@example.test', role: 'ADMIN'
+    }));
+  });
+  await page.route('**/api/v1/admin/payments/reconciliation**', route =>
+    route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(response({items: [], total: 0, limit: 20, offset: 0}))}));
+  await page.route('**/api/v1/admin/payments?**', route =>
+    route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(response({items: [], total: 0, limit: 100, offset: 0}))}));
+  await page.route('**/api/v1/admin/reviews**', route =>
+    route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(response({items: [review], total: 1, limit: 100, offset: 0}))}));
+  await page.route('**/api/v1/admin/reviews/review-1/publication', async route => {
+    const body = route.request().postDataJSON();
+    review.published = body.published;
+    review.lastAction = body.published ? 'PUBLISHED' : 'UNPUBLISHED';
+    review.lastActorEmail = 'admin@example.test';
+    review.lastActionAt = '2026-11-09T10:30:00Z';
+    await route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(response(review))});
+  });
+  page.on('dialog', dialog => dialog.accept());
+  await page.goto('/admin');
+  await expect(page.getByRole('heading', {name: 'Product review moderation'})).toBeVisible();
+  await expect(page.getByText('Arrived damaged')).toBeVisible();
+  await page.getByRole('button', {name: 'Unpublish'}).click();
+  await expect(page.getByText('Review unpublished. It is excluded from public reviews and ratings.')).toBeVisible();
+  await expect(page.getByText('UNPUBLISHED by admin@example.test')).toBeVisible();
+  await page.getByRole('button', {name: 'Publish'}).click();
+  await expect(page.getByText('Review published. Public ratings have been updated.')).toBeVisible();
+});

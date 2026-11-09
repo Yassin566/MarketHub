@@ -26,6 +26,9 @@ test('admin can review and confirm a provider payment outcome with an audit reco
   await page.route('**/api/v1/admin/payments/reconciliation**', route =>
     route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) })
   );
+  await page.route('**/api/v1/admin/reviews**', route =>
+    route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 100, offset: 0 }) })
+  );
   await page.route('**/api/v1/admin/payments**', async route => {
     const request = route.request();
     const url = new URL(request.url());
@@ -91,6 +94,9 @@ test('admin resolution form validates evidence before showing confirmation', asy
   await page.route('**/api/v1/admin/payments/reconciliation**', route =>
     route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) })
   );
+  await page.route('**/api/v1/admin/reviews**', route =>
+    route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 100, offset: 0 }) })
+  );
   await page.route('**/api/v1/admin/payments**', async route => {
     if (new URL(route.request().url()).pathname.endsWith('/reconciliation')) {
       await route.fulfill({ json: apiResponse({ items: [], total: 0, limit: 20, offset: 0 }) });
@@ -109,7 +115,7 @@ test('admin resolution form validates evidence before showing confirmation', asy
   await page.goto('/admin');
   await page.getByRole('button', { name: 'Review resolution' }).click();
   await page.getByRole('button', { name: 'Review decision' }).click();
-  await expect(page.getByRole('alert')).toContainText('evidence reference');
+  await expect(page.getByText('Enter an evidence reference of 1–300 characters.')).toBeVisible();
   await expect(page.getByText('Confirm this irreversible action')).toHaveCount(0);
   expect(postCount).toBe(0);
 });
