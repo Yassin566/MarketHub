@@ -203,7 +203,7 @@ Acceptance:
 
 ### Phase 9 — End-to-end journeys and frontend quality
 
-**Status:** In progress — PR #53 adds a role-based route access matrix for customer, vendor, admin, and super-admin sessions, including unknown-role denial and anonymous deep-link recovery.
+**Status:** In progress — PR #53 adds a role-based route access matrix for customer, vendor, admin, and super-admin sessions. PR #54 expands the vendor fulfilment journey (paid → processing → dispatched), validates safe tracking URLs, and verifies retry after shipment API failure.
 
 **Goal:** Validate the complete application as real users would use it.
 

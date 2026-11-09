@@ -191,6 +191,7 @@
       }
       @if(dispatchTarget();as target){
         <div class="vendor-form-panel dispatch-panel"><div class="vendor-section-heading"><div><span class="eyebrow">SHIPMENT DETAILS</span><h3>Dispatch order {{target.id.slice(0,8)}}</h3><p>Recording dispatch will mark this vendor order as fulfilled.</p></div><button class="text-button" type="button" (click)="dispatchTarget.set(null)">Close</button></div>
+          @if(dispatchError()){<div class="vendor-alert" role="alert">{{dispatchError()}}</div>}
           <form class="vendor-product-form" (ngSubmit)="dispatch()"><label>Carrier<input name="carrier" [(ngModel)]="carrier" required maxlength="80" /></label><label>Tracking number<input name="trackingNumber" [(ngModel)]="trackingNumber" required maxlength="120" /></label><label class="wide-field">Tracking URL (optional)<input name="trackingUrl" type="text" inputmode="url" [(ngModel)]="trackingUrl" maxlength="2048" placeholder="https://" /></label><label>Estimated delivery<input name="estimatedDeliveryDate" type="date" [(ngModel)]="estimatedDeliveryDate" /></label><div class="wide-field vendor-form-actions"><button class="primary-button" type="submit" [disabled]="busy()||!carrier.trim()||!trackingNumber.trim()">{{busy()?'Saving...':'Confirm dispatch'}}</button></div></form>
         </div>
       }
