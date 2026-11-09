@@ -85,7 +85,7 @@ public class AdminProductController {
         return ApiResponse.ok(changeStatus(productId, principal.userId(), "ACTIVE", request.reason()));
     }
 
-    @Transactional\n    private ProductItem changeStatus(UUID id, UUID actor, String target, String reason) {
+    private ProductItem changeStatus(UUID id, UUID actor, String target, String reason) {
         return jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<ProductItem>) connection -> {
             try (var lock = connection.prepareStatement("SELECT status FROM products WHERE id=? FOR UPDATE")) {
                 lock.setObject(1,id);
