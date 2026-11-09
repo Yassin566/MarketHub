@@ -3,7 +3,7 @@ import {TestBed} from '@angular/core/testing';
 import {provideHttpClient,withInterceptors,HttpClient} from '@angular/common/http';
 import {HttpTestingController,provideHttpClientTesting} from '@angular/common/http/testing';
 import {provideRouter,Router} from '@angular/router';
-import {afterEach,beforeEach,describe,expect,it} from 'vitest';
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {authInterceptor} from './auth.interceptor';
 import {AuthService} from './auth.service';
 
@@ -43,10 +43,9 @@ describe('authInterceptor',()=>{
   await router.navigateByUrl('/orders');
   client.get('/api/v1/customer/orders').subscribe({error:()=>undefined});
   http.expectOne('/api/v1/customer/orders').flush({message:'Unauthorized'},{status:401,statusText:'Unauthorized'});
-  await Promise.resolve();
+  await vi.waitFor(()=>expect(router.url).toContain('/login'));
   expect(auth.user()).toBeNull();
   expect(sessionStorage.getItem('markethub.access-token')).toBeNull();
-  expect(router.url).toContain('/login');
   expect(router.url).toContain('returnUrl');
  });
 
