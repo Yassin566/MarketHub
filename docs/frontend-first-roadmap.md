@@ -181,7 +181,7 @@ Acceptance:
 
 ### Phase 8 — Shared design system and responsive polish
 
-**Status:** In progress — shared interaction tokens, keyboard focus, reduced-motion support, mobile navigation, role-specific customer/vendor/admin layouts, and the remaining discovery/authentication/purchase journey are being consolidated. PR #50 covers the shared foundation; PR #51 covers customer/vendor/admin screens; the storefront and checkout follow-up is tracked in PR #52.
+**Status:** Complete — PRs #50, #51, and #52 are merged. Shared interaction tokens, keyboard focus, reduced-motion support, mobile navigation, role-specific customer/vendor/admin layouts, and responsive authentication, discovery, cart, and checkout journeys are covered.
 
 **Goal:** Make the entire product feel like one cohesive application.
 
@@ -202,6 +202,8 @@ Acceptance:
 - Accessibility checks included in regression review.
 
 ### Phase 9 — End-to-end journeys and frontend quality
+
+**Status:** In progress — PR #53 adds a role-based route access matrix for customer, vendor, admin, and super-admin sessions, including unknown-role denial and anonymous deep-link recovery.
 
 **Goal:** Validate the complete application as real users would use it.
 
@@ -262,13 +264,13 @@ For every proposed backend addition:
 
 ## Current next action
 
-Start **Phase 1 — Customer storefront and product discovery**.
+Continue **Phase 9 — End-to-end journeys and frontend quality**.
 
 Before coding:
-- Inspect the current catalogue/product controllers, DTOs, query parameters, and Angular catalogue components/services.
-- List which filters/sort fields are truly supported.
-- Identify whether product images and categories are available.
-- Implement only supported capabilities first; raise a small backend prerequisite only if the inspection proves it is needed.
+- Review coverage for the complete customer, vendor, and admin journeys against the current UI and API contracts.
+- Add focused browser tests for gaps in critical interactions and access boundaries.
+- Keep test data deterministic and isolated; do not weaken meaningful assertions to make CI green.
+- Verify the complete CI suite on the exact latest PR head SHA.
 
 ## Progress tracking
 
