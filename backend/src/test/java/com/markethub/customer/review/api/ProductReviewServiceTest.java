@@ -67,4 +67,18 @@ class ProductReviewServiceTest {
                 .isInstanceOf(IllegalArgumentException.class);
         verifyNoInteractions(jdbc);
     }
+
+    @Test
+    void findOwnedScopesLookupToBothProductAndAuthenticatedCustomer() {
+        UUID customerId = UUID.randomUUID();
+        UUID productId = UUID.randomUUID();
+        when(jdbc.queryForObject(anyString(), eq(Boolean.class), eq(productId))).thenReturn(true);
+        when(jdbc.query(anyString(), any(RowMapper.class), eq(productId), eq(customerId)))
+                .thenReturn(List.of());
+
+        org.assertj.core.api.Assertions.assertThat(reviews.findOwned(customerId, productId)).isNull();
+
+        verify(jdbc).query(org.mockito.ArgumentMatchers.contains("product_id = ? AND customer_user_id = ?"),
+                any(RowMapper.class), eq(productId), eq(customerId));
+    }
 }
