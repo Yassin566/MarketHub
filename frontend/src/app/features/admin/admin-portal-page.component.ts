@@ -169,6 +169,63 @@ export class AdminPortalPageComponent implements OnInit {
     });
   }
 
+  loadModeration(): void {
+    this.moderationLoading.set(true);
+    this.moderationError.set('');
+    let params = new HttpParams().set('limit', 100).set('offset', 0);
+    const published = this.moderationPublishedFilter();
+    const rating = this.moderationRatingFilter();
+    if (published !== 'all') params = params.set('published', published);
+    if (rating !== 'all') params = params.set('rating', rating);
+    this.http.get<ApiResponse<ModerationPage>>(
+      `${environment.apiBaseUrl}/admin/reviews`, {params}
+    ).subscribe({
+      next: response => {
+        this.moderationItems.set(response.data?.items ?? []);
+        this.moderationTotal.set(response.data?.total ?? 0);
+        this.moderationLoading.set(false);
+      },
+      error: error => {
+        this.moderationError.set(error.error?.error?.message
+          || 'Could not load product reviews. Check your admin access and try again.');
+        this.moderationLoading.set(false);
+      }
+    });
+  }
+
+  setReviewPublication(review: ModerationReview): void {
+    if (this.moderationBusyId()) return;
+    const published = !review.published;
+    const action = published ? 'publish' : 'unpublish';
+    if (!globalThis.confirm(`Are you sure you want to ${action} this review?`)) return;
+    this.moderationBusyId.set(review.id);
+    this.moderationNotice.set('');
+    this.moderationError.set('');
+    this.http.patch<ApiResponse<ModerationReview>>(
+      `${environment.apiBaseUrl}/admin/reviews/${review.id}/publication`,
+      {published}
+    ).subscribe({
+      next: response => {
+        const updated = response.data;
+        if (updated) {
+          this.moderationItems.update(items => items.map(item => item.id === updated.id ? updated : item));
+        } else {
+          this.loadModeration();
+        }
+        this.moderationNotice.set(published
+          ? 'Review published. Public ratings have been updated.'
+          : 'Review unpublished. It is excluded from public reviews and ratings.');
+        this.moderationBusyId.set('');
+      },
+      error: error => {
+        this.moderationError.set(error.status === 404
+          ? 'This review no longer exists. Refresh the review list.'
+          : error.error?.error?.message || 'The review publication state could not be changed.');
+        this.moderationBusyId.set('');
+      }
+    });
+  }
+
   previous(): void {
     if (this.offset() > 0) {
       this.offset.set(Math.max(0, this.offset() - this.limit));
