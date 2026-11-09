@@ -25,6 +25,10 @@ async function stubUnrelatedAdminApis(page: import('@playwright/test').Page) {
     route.fulfill({ json: response({ items: [], total: 0, limit: 100, offset: 0 }) }));
   await page.route('**/api/v1/admin/reviews**', route =>
     route.fulfill({ json: response({ items: [], total: 0, limit: 100, offset: 0 }) }));
+  await page.route('**/api/v1/admin/vendors**', route =>
+    route.fulfill({ json: response({ items: [], total: 0, limit: 20, offset: 0 }) }));
+  await page.route('**/api/v1/admin/vendor-applications**', route =>
+    route.fulfill({ json: response([]) }));
 }
 
 test('product moderation conflict leaves the product unchanged and reports the server error', async ({ page }) => {
@@ -54,8 +58,9 @@ test('product moderation conflict leaves the product unchanged and reports the s
   });
   await page.getByRole('button', { name: 'Deactivate' }).click();
 
-  await expect(page.getByRole('alert')).toContainText('Product status changed concurrently');
-  await expect(page.getByRole('row').filter({ hasText: 'Desk Lamp' })).toContainText('ACTIVE');
+  const products = page.locator('mh-admin-product-management');
+  await expect(products.getByRole('alert')).toContainText('Product status changed concurrently');
+  await expect(products.getByRole('row').filter({ hasText: 'Desk Lamp' })).toContainText('ACTIVE');
   expect(submittedReason).toBe('Policy review confirmed');
 });
 
