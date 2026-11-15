@@ -21,6 +21,20 @@ describe('CustomerService', () => {
 
   afterEach(() => http.verify());
 
+  it('loads and updates the authenticated customer profile', () => {
+    const profile = { firstName: 'Ada', lastName: 'Lovelace', phone: '+216 20 123 456' };
+    service.profile().subscribe(result => expect(result.data).toEqual(profile));
+    const getRequest = http.expectOne('/api/v1/customer/profile');
+    expect(getRequest.request.method).toBe('GET');
+    getRequest.flush(response(profile));
+
+    service.updateProfile(profile).subscribe(result => expect(result.data).toEqual(profile));
+    const putRequest = http.expectOne('/api/v1/customer/profile');
+    expect(putRequest.request.method).toBe('PUT');
+    expect(putRequest.request.body).toEqual(profile);
+    putRequest.flush(response(profile));
+  });
+
   it('loads the authenticated customer cart', () => {
     service.cart().subscribe(result => expect(result.data).toEqual(emptyCart));
     const request = http.expectOne('/api/v1/customer/cart');
