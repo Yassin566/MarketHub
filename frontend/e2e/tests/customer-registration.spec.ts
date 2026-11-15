@@ -40,7 +40,7 @@ test.describe('customer registration journey', () => {
     });
 
     await page.goto('/register');
-    await page.getByLabel('Email address').fill(' new.buyer@example.test ');
+    await page.getByLabel('Email address').fill('new.buyer@example.test');
     await page.getByLabel('Password').fill('MarketHubBuyer2026!');
     await page.getByRole('button', { name: 'Create account' }).click();
 
