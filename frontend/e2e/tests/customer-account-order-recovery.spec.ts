@@ -58,6 +58,9 @@ test.describe('customer account and order recovery', () => {
 
   test('keeps recent orders visible when the notification request independently fails', async ({ page }) => {
     await authenticateCustomer(page);
+    await page.route('**/api/v1/customer/profile', route =>
+      route.fulfill({ json: envelope({ firstName: 'Ada', lastName: 'Lovelace', phone: '' }) }),
+    );
     await page.route('**/api/v1/customer/orders**', route =>
       route.fulfill({ json: envelope({ orders: [order('order-account', 'Account order item')], limit: 5, offset: 0, hasMore: false }) }),
     );
