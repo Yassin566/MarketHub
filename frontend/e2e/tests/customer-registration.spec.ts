@@ -26,7 +26,7 @@ test.describe('customer registration journey', () => {
 
     await page.goto('/register');
     await page.getByLabel('Email address').fill('new.buyer@example.test');
-    await page.getByLabel('Password').fill('short-pass');
+    await page.getByRole('textbox', { name: 'Password' }).fill('short-pass');
     await expect(page.getByText('Password must contain at least 12 characters.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Create account' })).toBeDisabled();
     expect(registrationRequests).toBe(0);
@@ -41,7 +41,7 @@ test.describe('customer registration journey', () => {
 
     await page.goto('/register');
     await page.getByLabel('Email address').fill('new.buyer@example.test');
-    await page.getByLabel('Password').fill('MarketHubBuyer2026!');
+    await page.getByRole('textbox', { name: 'Password' }).fill('MarketHubBuyer2026!');
     await page.getByRole('button', { name: 'Create account' }).click();
 
     await expect(page).toHaveURL(/\/account$/);
@@ -73,7 +73,7 @@ test.describe('customer registration journey', () => {
 
     await page.goto('/register');
     await page.getByLabel('Email address').fill('existing.buyer@example.test');
-    await page.getByLabel('Password').fill('MarketHubBuyer2026!');
+    await page.getByRole('textbox', { name: 'Password' }).fill('MarketHubBuyer2026!');
     await page.getByRole('button', { name: 'Create account' }).click();
 
     await expect(page.getByRole('alert')).toContainText('An account with this email already exists.');
