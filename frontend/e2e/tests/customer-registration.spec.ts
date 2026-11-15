@@ -26,7 +26,9 @@ test.describe('customer registration journey', () => {
 
     await page.goto('/register');
     await page.getByLabel('Email address').fill('new.buyer@example.test');
-    await page.getByRole('textbox', { name: 'Password' }).fill('short-pass');
+    const passwordInput = page.getByRole('textbox', { name: 'Password' });
+    await passwordInput.fill('short-pass');
+    await passwordInput.blur();
     await expect(page.getByText('Password must contain at least 12 characters.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Create account' })).toBeDisabled();
     expect(registrationRequests).toBe(0);
