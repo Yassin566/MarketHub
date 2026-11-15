@@ -8,6 +8,22 @@
       <a class="account-shortcut" routerLink="/notifications"><span class="eyebrow">UPDATES</span><strong>Notifications @if(unreadCount()>0){<span class="notification-count">{{unreadCount()}}</span>}</strong><span>Payment, order and delivery messages →</span></a>
       <a class="account-shortcut" routerLink="/cart"><span class="eyebrow">SHOPPING</span><strong>Your cart</strong><span>Review items and continue checkout →</span></a>
     </div>
+
+    <section class="profile-panel" aria-labelledby="profile-heading">
+      <div class="account-section-heading"><div><span class="eyebrow">YOUR DETAILS</span><h2 id="profile-heading">Personal profile</h2></div></div>
+      <p class="muted">Keep your contact details up to date for a smoother marketplace experience.</p>
+      <form (ngSubmit)="saveProfile()">
+        <div class="profile-grid">
+          <div class="profile-field"><label for="profile-first-name">First name</label><input id="profile-first-name" name="firstName" [(ngModel)]="profileForm.firstName" maxlength="80" autocomplete="given-name" required></div>
+          <div class="profile-field"><label for="profile-last-name">Last name</label><input id="profile-last-name" name="lastName" [(ngModel)]="profileForm.lastName" maxlength="80" autocomplete="family-name" required></div>
+          <div class="profile-field"><label for="profile-phone">Phone number <span class="muted">(optional)</span></label><input id="profile-phone" name="phone" [(ngModel)]="profileForm.phone" maxlength="32" type="tel" autocomplete="tel"></div>
+        </div>
+        @if(profileError()){<p class="profile-feedback error" role="alert">{{profileError()}}</p>}
+        @if(profileMessage()){<p class="profile-feedback success" role="status">{{profileMessage()}}</p>}
+        <div class="profile-actions"><button class="primary-button" type="submit" [disabled]="profileSaving()">{{profileSaving()?'Saving...':'Save profile'}}</button></div>
+      </form>
+    </section>
+
     <div class="account-section-heading"><div><span class="eyebrow">PURCHASE ACTIVITY</span><h2>Recent orders</h2></div><a class="text-button" routerLink="/orders">All orders →</a></div>
     @if(!orders().length){<div class="customer-empty"><h3>No orders yet</h3><p>When you place an order, its progress will appear here.</p><a class="primary-button" routerLink="/products">Explore products</a></div>}
     @else{@for(order of orders();track order.id){<a class="order-card" [routerLink]="['/orders',order.id]"><div><span class="eyebrow">PLACED {{order.createdAt|date:'mediumDate'}}</span><h3>{{order.items.length}} items · {{order.id.slice(0,8)}}</h3><p>{{order.items[0]?.productName}}@if(order.items.length>1){ · +{{order.items.length-1}} more}</p></div><div class="order-card-meta"><strong>{{order.total|currency:order.currency}}</strong><span class="status-pill">{{order.status}}</span></div></a>}}

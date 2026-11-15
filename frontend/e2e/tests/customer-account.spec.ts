@@ -7,6 +7,7 @@ test.describe('customer account dashboard and order history',()=>{
   sessionStorage.setItem('markethub.session-user',JSON.stringify({userId:'customer-1',email:'customer@example.test',role:'CUSTOMER'}));
  }));
  test('shows account shortcuts, recent orders and notification updates',async({page})=>{
+  await page.route('**/api/v1/customer/profile',route=>route.fulfill({json:envelope({firstName:'Ada',lastName:'Lovelace',phone:''})}));
   await page.route('**/api/v1/customer/orders**',route=>route.fulfill({json:envelope({orders:[order],limit:5,offset:0,hasMore:false})}));
   await page.route('**/api/v1/customer/notifications**',route=>route.fulfill({json:envelope({notifications:[{id:'n1',orderId:'order-abc123',type:'ORDER',title:'Order paid',message:'Your order is confirmed.',createdAt:'2026-11-08T11:00:00Z',readAt:null}],limit:5,offset:0,hasMore:false,unreadCount:1})}));
   await page.goto('/account');
@@ -14,6 +15,25 @@ test.describe('customer account dashboard and order history',()=>{
   await expect(page.getByRole('link',{name:/Order history/})).toBeVisible();
   await expect(page.getByText('Canvas tote')).toBeVisible();
   await expect(page.getByText('Your order is confirmed.')).toBeVisible();
+ });
+ test('loads and saves customer profile details from the account dashboard',async({page})=>{
+  let savedProfile:unknown=null;
+  await page.route('**/api/v1/customer/profile',async route=>{
+   if(route.request().method()==='PUT'){
+    savedProfile=route.request().postDataJSON();
+    await route.fulfill({json:envelope(savedProfile)});
+   }else await route.fulfill({json:envelope({firstName:'Ada',lastName:'Lovelace',phone:''})});
+  });
+  await page.route('**/api/v1/customer/orders**',route=>route.fulfill({json:envelope({orders:[],limit:5,offset:0,hasMore:false})}));
+  await page.route('**/api/v1/customer/notifications**',route=>route.fulfill({json:envelope({notifications:[],limit:5,offset:0,hasMore:false,unreadCount:0})}));
+  await page.goto('/account');
+  await expect(page.getByRole('heading',{name:'Personal profile'})).toBeVisible();
+  await page.getByLabel('First name').fill('Grace');
+  await page.getByLabel('Last name').fill('Hopper');
+  await page.getByLabel(/Phone number/).fill('+216 20 123 456');
+  await page.getByRole('button',{name:'Save profile'}).click();
+  await expect(page.getByRole('status')).toContainText('Your profile has been saved');
+  expect(savedProfile).toEqual({firstName:'Grace',lastName:'Hopper',phone:'+216 20 123 456'});
  });
  test('shows paginated order history and retries a failed read',async({page})=>{
   let reads=0;
